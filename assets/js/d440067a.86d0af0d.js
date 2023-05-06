@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkselectdb_portal=self.webpackChunkselectdb_portal||[]).push([[49513],{81765:s=>{s.exports=JSON.parse('{"label":"Tech Insights","permalink":"/blog/tags/tech-insights","allTagsPath":"/blog/tags","count":1}')}}]);
