@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # SSL密钥证书配置
 
 Doris开启SSL功能需要配置CA密钥证书和Server端密钥证书，如需开启双向认证，还需生成Client端密钥证书：
@@ -61,18 +42,18 @@ openssl x509 -req -in client-req.pem -days 3600 \
 
 2.验证创建的证书。
 
-```bash
+```shell
 openssl verify -CAfile ca.pem server-cert.pem client-cert.pem
 ```
 
 3.将您的CA密钥和证书和Sever端密钥和证书分别合并到 PKCS#12 (P12) 包中。
 
-```bash
+```shell
 # 打包CA密钥和证书
 openssl pkcs12 -inkey ca-key.pem -in ca.pem -export -out ca_certificate.p12
 
 # 打包Server端密钥和证书
-openssl pkcs12 -inkey server-key.pem -in server.pem -export -out server_certificate.p12
+openssl pkcs12 -inkey server-key.pem -in server-cert.pem -export -out server_certificate.p12
 ```
 
 >[参考文档](https://www.ibm.com/docs/en/api-connect/2018.x?topic=overview-generating-self-signed-certificate-using-openssl)

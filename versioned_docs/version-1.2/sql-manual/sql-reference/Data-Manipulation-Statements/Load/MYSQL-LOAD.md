@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## MYSQL-LOAD
 
 ### Name
@@ -75,7 +56,7 @@ This import method can still guarantee the atomicity of a batch of import tasks,
 
 4. timezone: Specify the time zone used for this import. The default is Dongba District. This parameter affects the results of all time zone-related functions involved in the import.
 
-5. exec_mem_limit: Import memory limit. Default is 2GB. The unit is bytes.
+5. exec_mem_limit: Load memory limit. Default is 2GB. The unit is bytes.
 
 6. trim_double_quotes: Boolean type, The default value is false. True means that the outermost double quotes of each field in the load file are trimmed.
 
@@ -157,7 +138,7 @@ This import method can still guarantee the atomicity of a batch of import tasks,
     PROPERTIES ("strict_mode"="true", "timezone"="Africa/Abidjan")
     ```
 
-9. Import data is limited to 10GB of import memory and timed out in 10 minutes
+9. Import data is limited to 10GB of load memory and timed out in 10 minutes
 
     ```sql
     LOAD DATA LOCAL

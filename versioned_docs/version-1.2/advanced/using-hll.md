@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## HLL approximate deduplication
 
 In actual business scenarios, with the increasing amount of business data, the pressure on data deduplication is also increasing. When the data reaches a certain scale, the cost of using accurate deduplication is also increasing. If it is acceptable, it is a very good way to achieve fast deduplication and reduce computational pressure through approximate algorithms. This article mainly introduces HyperLogLog (HLL for short) provided by Doris as an approximate deduplication algorithm.
@@ -113,19 +94,18 @@ PROPERTIES(
        -H "columns:dt,id,name,province,os, pv=hll_hash(id)" -T test_hll.csv http://fe_IP:8030/api/demo/test_hll/_stream_load
    ```
 
-   The sample data is as follows（test_hll.csv）：
+   The sample data is as follows (test_hll.csv):
 
+   ```text
+  2022-05-05,10001,Testing01,Beijing,Windows  
+  2022-05-05,10002,Testing01,Beijing,Linux  
+  2022-05-05,10003,Testing01,Beijing,MacOS  
+  2022-05-05,10004,Testing01,Hebei,Windows  
+  2022-05-06,10001,Testing01,Shanghai,Windows  
+  2022-05-06,10002,Testing01,Shanghai,Linux  
+  2022-05-06,10003,Testing01,Jiangsu,MacOS  
+  2022-05-06,10004,Testing01,Shaanxi,Windows
    ```
-   2022-05-05,10001,测试01,北京,windows
-   2022-05-05,10002,测试01,北京,linux
-   2022-05-05,10003,测试01,北京,macos
-   2022-05-05,10004,测试01,河北,windows
-   2022-05-06,10001,测试01,上海,windows
-   2022-05-06,10002,测试01,上海,linux
-   2022-05-06,10003,测试01,江苏,macos
-   2022-05-06,10004,测试01,陕西,windows
-   ```
-
    The import result is as follows:
 
    ```

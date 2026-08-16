@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Synchronize data through external table
 
 Doris can create external tables. Once created, you can query the data of the external table directly with the SELECT statement or import the data of the external table with the `INSERT INTO SELECT` method.
@@ -62,7 +43,7 @@ Here is just an example of how to use it.
        "odbc_type" = "oracle",
        "driver" = "Oracle"
    );
-   ````
+   ```
 
 Here we have created a Resource named `oracle_test_odbc`, whose type is `odbc_catalog`, indicating that this is a Resource used to store ODBC information. `odbc_type` is `oracle`, indicating that this OBDC Resource is used to connect to the Oracle database. For other types of resources, see the [resource management](../../../advanced/resource.md) documentation for details.
 
@@ -82,7 +63,7 @@ PROPERTIES (
     "database" = "oracle",
     "table" = "baseall"
 );
-````
+```
 
 Here we create an `ext_oracle_demo` external table and reference the `oracle_test_odbc` Resource created earlier
 
@@ -105,7 +86,7 @@ Here we create an `ext_oracle_demo` external table and reference the `oracle_tes
    PROPERTIES (
        "replication_num" = "1"
    );
-   ````
+   ```
 
    For detailed instructions on creating Doris tables, see [CREATE-TABLE](../../../sql-manual/sql-reference/Data-Definition-Statements/Create/CREATE-TABLE.md) syntax help.
 
@@ -113,7 +94,7 @@ Here we create an `ext_oracle_demo` external table and reference the `oracle_tes
 
    ```sql
    INSERT INTO doris_oralce_tbl SELECT k1,k2,k3 FROM ext_oracle_demo limit 200
-   ````
+   ```
    
    The INSERT command is a synchronous command, and a successful return indicates that the import was successful.
 

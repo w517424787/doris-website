@@ -5,32 +5,13 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## SHOW-FUNCTIONS
 
 ### Name
 
 SHOW FUNCTIONS
 
-### Description
+## 描述
 
 查看数据库下所有的自定义(系统提供)的函数。如果用户指定了数据库，那么查看对应数据库的，否则直接查询当前会话所在数据库
 
@@ -63,7 +44,7 @@ Parameters
 
 **注意: "global"关键字在v2.0版本及以后才可用**
 
-### Example
+## 举例
 
 ```sql
 mysql> show full functions in testDb\G

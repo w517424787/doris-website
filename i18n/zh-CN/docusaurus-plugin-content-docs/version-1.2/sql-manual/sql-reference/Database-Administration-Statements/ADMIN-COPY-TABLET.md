@@ -5,32 +5,13 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## ADMIN-COPY-TABLET
 
 ### Name
 
 ADMIN COPY TABLET
 
-### Description
+## 描述
 
 该语句用于为指定的 tablet 制作快照，主要用于本地加载 tablet 来复现问题。
 
@@ -79,7 +60,7 @@ PROPERTIES (
 * ExpirationMinutes: 快照过期时间
 * CreateTableStmt: tablet 对应的表的建表语句。该语句不是原始的建表语句，而是用于之后本地加载 tablet 的简化后的建表语句。
 
-### Example
+## 举例
 
 1. 对指定 BE 节点上的副本做快照
 

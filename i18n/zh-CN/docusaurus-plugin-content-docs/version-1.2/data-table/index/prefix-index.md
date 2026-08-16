@@ -5,24 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
 # 索引概述
 
 索引用于帮助快速过滤或查找数据。
@@ -70,13 +52,13 @@ under the License.
 当我们的查询条件，是**前缀索引的前缀**时，可以极大的加快查询速度。比如在第一个例子中，我们执行如下查询：
 
 ```sql
-SELECT * FROM table WHERE user_id=1829239 and age=20；
+SELECT * FROM table WHERE user_id=1829239 and age=20;
 ```
 
 该查询的效率会**远高于**如下查询：
 
 ```sql
-SELECT * FROM table WHERE age=20；
+SELECT * FROM table WHERE age=20;
 ```
 
 所以在建表时，**正确的选择列顺序，能够极大地提高查询效率**。

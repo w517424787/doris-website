@@ -1,3 +1,4 @@
+@use 'sass:meta';
 /**
  * Any CSS included here will be global. The classic template
  * bundles Infima by default. Infima is a CSS framework designed to
@@ -5,13 +6,197 @@
  */
 
 /* You can override the default Infima variables here. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@include meta.load-css('variables');
+@include meta.load-css('components/sidebar');
+@include meta.load-css('components/breadcrumbs');
+@include meta.load-css('components/markdown');
+@include meta.load-css('components/pagination-nav');
+@include meta.load-css('components/navbar');
+@include meta.load-css('components/blog');
+@include meta.load-css('components/search');
+@include meta.load-css('components/toc.scss');
+@include meta.load-css('common');
 
-@import './variables';
-@import './components/sidebar';
-@import './components/breadcrumbs';
-@import './components/markdown';
-@import './components/pagination-nav';
-@import './components/navbar';
-@import './components/blog';
-@import './components/search';
-@import './common';
+@font-face {
+    font-family: 'Inter';
+    src: url('/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype-variations');
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Sans SC';
+    src: url('/fonts/NotoSansSC-VariableFont_wght.ttf') format('truetype-variations');
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('/fonts/JetBrainsMono-VariableFont_wght.ttf') format('truetype-variations');
+    font-weight: 100 800;
+    font-display: swap;
+}
+
+:root {
+    --font-sans-en: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --font-sans-zh: 'Noto Sans SC', 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --font-family-base: var(--font-sans-en);
+    --ifm-font-family-base: var(--font-sans-en);
+    --ifm-font-family-monospace: var(--font-mono);
+}
+
+@layer utilities {
+    .transition-slide {
+        @apply inline-block transform transition-transform duration-300 hover:translate-x-1 group-hover:translate-x-1;
+    }
+}
+
+.button-primary {
+    display: flex;
+    height: 52px;
+    padding: 15px 40px;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    border-radius: 4px;
+    background: var(--ifm-color-primary);
+    color: white;
+}
+
+html[lang='zh-Hans-CN'] {
+    --font-family-base: var(--font-sans-zh);
+    --ifm-font-family-base: var(--font-sans-zh);
+    font-family: var(--font-family-base);
+}
+
+html[lang='en-US'] {
+    --font-family-base: var(--font-sans-en);
+    --ifm-font-family-base: var(--font-sans-en);
+    font-family: var(--font-family-base);
+}
+.markdown :where(p, h1, h2, h3, h4, h5, h6, li, blockquote) {
+    font-family: var(--font-family-base);
+    color: #1f1f26;
+}
+
+body {
+    font-family: var(--font-family-base);
+}
+// body, .markdown {
+//     font-family: var(--font-family-base);
+//     font-weight: 400 !important;
+//     color: #2a2f34
+// }
+
+.navbar__link {
+    font-family: var(--font-family-base);
+    font-weight: 400 !important;
+}
+
+.alert--success {
+    border: 0px solid rgba(0, 180, 42, 0.5);
+    border-left-width: 5px;
+    border-radius: 4px;
+    background: var(--brand-surface-callout);
+}
+
+.alert--caution {
+    border: 0px solid #ff7d00;
+    border-left-width: 5px;
+    border-radius: 4px;
+    background: rgba(255, 244, 224, 0.8);
+}
+
+.alert--info {
+    border: 0px solid rgba(0, 101, 253, 0.5);
+    border-left-width: 5px;
+    border-radius: 4px;
+    background: rgba(0, 101, 253, 0.08);
+}
+
+.ant-pagination-item-active a,
+.ant-pagination-item-active {
+    color: var(--ifm-color-primary) !important;
+}
+.ant-pagination-options-quick-jumper input:hover,
+.ant-pagination-options-quick-jumper input:focus-within,
+.ant-pagination-item-active a,
+.ant-pagination-item-active
+ {
+    border-color: var(--ifm-color-primary) !important;
+}
+
+.ant-pagination-options-quick-jumper input:focus-within {
+    box-shadow: 0 0 0 2px var(--brand-primary-soft) !important;
+}
+
+.ant-pagination-item-container .ant-pagination-item-link-icon {
+    color: var(--ifm-color-primary) !important;
+}
+
+.markdown .doris-doc-intro-animation {
+    width: 100%;
+    max-width: 960px;
+    aspect-ratio: 16 / 9;
+    margin: 0 auto 32px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #0a0c0e;
+}
+
+.markdown .doris-doc-intro-animation__frame {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/**
+ * Lift Kapa's shadow-host above the sticky NavbarNext (z-index 300). The
+ * Mantine modal/overlay live inside the shadow root and inherit stacking
+ * from this host, so raising the host is enough.
+ */
+#kapa-widget-container {
+    z-index: 9999 !important;
+}
+
+[data-kapa-trigger][aria-busy='true'] {
+    cursor: progress;
+}
+
+[data-kapa-trigger][aria-busy='true'] svg {
+    animation: doris-kapa-loading 1s linear infinite;
+}
+
+[data-kapa-trigger][aria-disabled='true'] {
+    cursor: not-allowed;
+    opacity: 0.72;
+}
+
+@keyframes doris-kapa-loading {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-kapa-trigger][aria-busy='true'] svg {
+        animation: none;
+    }
+}
+
+// Centering the Kapa modal itself is done by injecting CSS into its shadow
+// root from static/js/custom-script.js, since light-DOM rules can't pierce it.
+
+@media (min-width: 997px) {
+    .docs-wrapper .theme-back-to-top-button {
+        right: calc(386px + 2rem);
+        bottom: 1.5rem;
+        z-index: 259;
+    }
+}

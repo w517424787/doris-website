@@ -1,40 +1,87 @@
 .icon-language {
-  vertical-align: text-bottom;
-  margin-right: 0.3125rem;
+    vertical-align: text-bottom;
+}
+.dropdown__menu {
+    padding: 6px 0;
+    .dropdown__link {
+        color: #1d1d1d;
+        font-size: 14px;
+        font-weight: normal;
+        padding: 0.5rem 0.75rem;
+        line-height: 1.6;
+        &:hover {
+            background-color: #F7FAFC !important;
+            color: #1d1d1d !important;
+        }
+    }
+    .dropdown__link--active,
+    .dropdown__link--active:hover {
+        color: var(--ifm-color-primary) !important;
+        background-color: transparent !important;
+    }
+    .dropdown__link--disabled,
+    .dropdown__link--disabled:hover {
+        color: #9aa3b2 !important;
+        cursor: not-allowed !important;
+        background-color: transparent !important;
+    }
+}
+
+.locale-dropdown__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.locale-dropdown__label-text {
+    flex: 0 0 auto;
+}
+
+.locale-dropdown__coming-soon-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    font-size: 10px;
+    line-height: 1.4;
+    font-weight: 500;
+    color: #6b7280;
+    background-color: #f1f3f5;
+    border: 1px solid #e2e6eb;
+    border-radius: 9999px;
+    white-space: nowrap;
 }
 
 .locale-box {
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
 
-  >a {
-    position: relative;
-    padding: 0 1rem;
-    color: var(--global-colors-text-primary);
-    font-size: var(--global-font-size-medium);
+    > a {
+        position: relative;
+        padding: 0 1rem;
+        color: var(--global-colors-text-primary);
+        font-size: var(--global-font-size-medium);
 
-    &.dropdown__link--active {
-      background-color: transparent;
-      color: var(--ifm-color-primary);
+        &.dropdown__link--active {
+            background-color: transparent;
+            color: var(--ifm-color-primary);
+        }
+
+        &:hover {
+            text-decoration: none;
+        }
+
+        & + a {
+            &::before {
+                content: '';
+                display: block;
+                width: 2px;
+                height: 0.75rem;
+                background-color: var(--global-colors-text-primary);
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                left: 0;
+            }
+        }
     }
-
-    &:hover {
-      text-decoration: none;
-    }
-
-    &+a {
-
-      &::before {
-        content: '';
-        display: block;
-        width: 2px;
-        height: 0.75rem;
-        background-color: var(--global-colors-text-primary);
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        left: 0;
-      }
-    }
-  }
 }

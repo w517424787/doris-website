@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # 元数据运维
 
 本文档主要介绍在实际生产环境中，如何对 Doris 的元数据进行管理。包括 FE 节点建议的部署方式、一些常用的操作方法、以及常见错误的解决方法。
@@ -191,7 +172,7 @@ FE 有可能因为某些原因出现无法启动 bdbje、FE 之间无法同步�
 
     1. 如果该节点是一个 OBSERVER，先将 `meta_dir/image/ROLE` 文件中的 `role=OBSERVER` 改为 `role=FOLLOWER`。（从 OBSERVER 节点恢复会比较麻烦，先按这里的步骤操作，后面会有单独说明）
     2. 在 fe.conf 中添加配置：`metadata_failure_recovery=true`。
-    3. 执行 `sh bin/start_fe.sh` 启动这个 FE。
+    3. 执行 `sh bin/start_fe.sh --daemon` 启动这个 FE。
     4. 如果正常，这个 FE 会以 MASTER 的角色启动，类似于前面 `启动单节点 FE` 一节中的描述。在 fe.log 应该会看到 `transfer from XXXX to MASTER` 等字样。
     5. 启动完成后，先连接到这个 FE，执行一些查询导入，检查是否能够正常访问。如果不正常，有可能是操作有误，建议仔细阅读以上步骤，用之前备份的元数据再试一次。如果还是不行，问题可能就比较严重了。
     6. 如果成功，通过 `show frontends;` 命令，应该可以看到之前所添加的所有 FE，并且当前 FE 是 master。
@@ -305,6 +286,7 @@ FE 的元数据日志以 Key-Value 的方式存储在 BDBJE 中。某些异常�
 
 ```
 mysql> show proc "/bdbje";
+
 +----------+---------------+---------+
 | DbNames  | JournalNumber | Comment |
 +----------+---------------+---------+
@@ -318,6 +300,7 @@ mysql> show proc "/bdbje";
 
 ```
 mysql> show proc "/bdbje/110589";
+
 +-----------+
 | JournalId |
 +-----------+
@@ -337,6 +320,7 @@ mysql> show proc "/bdbje/110589";
 
 ```
 mysql> show proc "/bdbje/110589/114861";
+
 +-----------+--------------+---------------------------------------------+
 | JournalId | OpType       | Data                                        |
 +-----------+--------------+---------------------------------------------+

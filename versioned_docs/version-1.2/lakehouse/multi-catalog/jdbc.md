@@ -5,26 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
-
 # JDBC
 
 JDBC Catalogs in Doris are connected to external data sources using the standard JDBC protocol.
@@ -120,12 +100,12 @@ Once connected, Doris will ingest metadata of databases and tables from the exte
 
    ```sql
    CREATE CATALOG sqlserver_catalog PROPERTIES (
-   	"type"="jdbc",
-   	"user"="SA",
-   	"password"="Doris123456",
-   	"jdbc_url" = "jdbc:sqlserver://localhost:1433;DataBaseName=doris_test",
-   	"driver_url" = "mssql-jdbc-11.2.3.jre8.jar",
-   	"driver_class" = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+    "type"="jdbc",
+    "user"="SA",
+    "password"="Doris123456",
+    "jdbc_url" = "jdbc:sqlserver://localhost:1433;DataBaseName=doris_test",
+    "driver_url" = "mssql-jdbc-11.2.3.jre8.jar",
+    "driver_class" = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
    );
    ```
 
@@ -201,9 +181,6 @@ When Trino is mapped, Doris's Database corresponds to a Schema in Trino that spe
 | Table    | Table   |
 
 9. OceanBase
-
-<<<<<<< HEAD
-<version since="dev"></version>
 
 ```sql
 CREATE CATALOG jdbc_oceanbase_mysql PROPERTIES (
@@ -325,8 +302,8 @@ The transaction mechanism ensures the atomicity of data writing to JDBC External
 
 ### PostgreSQL
 
- POSTGRESQL Type | Doris Type | Comment |
-|---|---|---|
+ POSTGRESQL Type                          | Doris Type | Comment                                                 |
+|-----------------------------------------|------------|---------------------------------------------------------|
 | boolean | BOOLEAN | |
 | smallint/int2 | SMALLINT | |
 | integer/int4 | INT | |
@@ -351,8 +328,8 @@ The transaction mechanism ensures the atomicity of data writing to JDBC External
 
 ### Oracle
 
-| ORACLE Type                   | Doris Type  | Comment                                                      |
-| ----------------------------- | ----------- | ------------------------------------------------------------ |
+| ORACLE Type                   | Doris Type                           | Comment                                             |
+| ----------------------------- | ------------------------------------ | ----------------------------------------------------|
 | number(p) / number(p,0)       | TINYINT/SMALLINT/INT/BIGINT/LARGEINT | Doris will determine the type to map to based on the value of p: `p < 3` -> `TINYINT`; `p < 5` -> `SMALLINT`; `p < 10` -> `INT`; `p < 19` -> `BIGINT`; `p > 19` -> `LARGEINT` |
 | number(p,s), [ if(s>0 && p>s) ] | DECIMAL(p,s) | |
 | number(p,s), [ if(s>0 && p < s) ] | DECIMAL(s,s) |  |
@@ -390,8 +367,8 @@ The transaction mechanism ensures the atomicity of data writing to JDBC External
 
 ### Clickhouse
 
-| ClickHouse Type                                      | Doris Type               | Comment                                                                                                                              |
-|------------------------------------------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| ClickHouse Type                                      | Doris Type               | Comment                                          |
+|------------------------------------------------------|--------------------------|--------------------------------------------------|
 | Bool                                                 | BOOLEAN                  |                                                                                                                                      |
 | String                                               | STRING                   |                                                                                                                                      |
 | Date/Date32                                          | DATEV2                   | JDBC CATLOG uses Datev2 type default when connecting ClickHouse                                                                      |
@@ -406,13 +383,13 @@ The transaction mechanism ensures the atomicity of data writing to JDBC External
 | Int256/UInt128/UInt256                               | STRING                   | Doris does not support data types of such orders of magnitude so these will be mapped to STRING.                                     |
 | DECIMAL                                              | DECIMAL/DECIMALV3/STRING | The Data type is based on the DECIMAL field's (precision, scale) and the `enable_decimal_conversion` configuration.                  |
 | Enum/IPv4/IPv6/UUID                                  | STRING                   | Data of IPv4 and IPv6 type will be displayed with an extra `/` as a prefix. To remove the `/`, you can use the `split_part`function. |
-| <version since="dev" type="inline"> Array </version> | ARRAY                    | Array internal basic type adaptation logic refers to the preceding types. Nested types are not supported                             |
+|   Array  | ARRAY                    | Array internal basic type adaptation logic refers to the preceding types. Nested types are not supported                             |
 | Other                                                | UNSUPPORTED              |                                                                                                                                      |
 
 ### Doris
 
-| Doris Type | Jdbc Catlog Doris Type | Comment |
-|---|---|---|
+| Doris Type          | Jdbc Catlog Doris Type    | Comment                                     |
+|---------------------|---------------------------|---------------------------------------------|
 | BOOLEAN | BOOLEAN | |
 | TINYINT | TINYINT | |
 | SMALLINT | SMALLINT | |
@@ -434,8 +411,8 @@ The transaction mechanism ensures the atomicity of data writing to JDBC External
 
 ### SAP HANA
 
-| SAP HANA Type | Doris Type               | Comment                                                                                                            |
-|---------------|--------------------------|--------------------------------------------------------------------------------------------------------------------|
+| SAP HANA Type | Doris Type               | Comment                                                               |
+|---------------|--------------------------|-----------------------------------------------------------------------|
 | BOOLEAN       | BOOLEAN                  |                                                                                                                    |
 | TINYINT       | TINYINT                  |                                                                                                                    |
 | SMALLINT      | SMALLINT                 |                                                                                                                    |
@@ -459,8 +436,8 @@ The transaction mechanism ensures the atomicity of data writing to JDBC External
 
 ### Trino
 
-| Trino Type                                           | Doris Type               | Comment                                                                                                            |
-|------------------------------------------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------|
+| Trino Type              | Doris Type               | Comment                                                                     |
+|-------------------------|--------------------------|-----------------------------------------------------------------------------|
 | boolean                                              | BOOLEAN                  |                                                                                                                    |
 | tinyint                                              | TINYINT                  |                                                                                                                    |
 | smallint                                             | SMALLINT                 |                                                                                                                    |
@@ -473,7 +450,7 @@ The transaction mechanism ensures the atomicity of data writing to JDBC External
 | timestamp                                            | DATETIME/DATETIMEV2      | JDBC CATLOG uses DATETIMEV2 type default when connecting Trino                                                     |
 | varchar                                              | TEXT                     |                                                                                                                    |
 | char                                                 | CHAR                     |                                                                                                                    |
-| <version since="dev" type="inline"> array </version> | ARRAY                    | Array internal basic type adaptation logic refers to the preceding types. Nested types are not supported           |
+|   array  | ARRAY                    | Array internal basic type adaptation logic refers to the preceding types. Nested types are not supported           |
 | others                                               | UNSUPPORTED              |                                                                                                                    |
 
 **Note:**

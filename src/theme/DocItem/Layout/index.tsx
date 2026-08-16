@@ -1,0 +1,133 @@
+import React, { useState, useEffect } from 'react';
+import clsx from 'clsx';
+import { useWindowSize } from '@docusaurus/theme-common';
+import { useDoc, useDocsVersion } from '@docusaurus/plugin-content-docs/client';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import DocItemPaginator from '@theme/DocItem/Paginator';
+import Link from '@docusaurus/Link';
+import DocVersionBanner from '@theme/DocVersionBanner';
+import DocVersionBadge from '@theme/DocVersionBadge';
+import DocItemFooter from '@theme/DocItem/Footer';
+import DocItemTOCMobile from '@theme/DocItem/TOC/Mobile';
+import { DocsAttention } from '../../../components/Icons/docs-attention';
+import DocItemTOCDesktop from '@theme/DocItem/TOC/Desktop';
+import DocItemContent from '@theme/DocItem/Content';
+import DocBreadcrumbs from '@theme/DocBreadcrumbs';
+import ContentVisibility from '@theme/ContentVisibility';
+import LastUpdated from '@theme/LastUpdated';
+import type { Props } from '@theme/DocItem/Layout';
+import { DocsEdit } from '../../../components/Icons/docs-edit';
+import MobileSidebarDrawer from './MobileSidebarDrawer';
+
+import styles from './styles.module.css';
+
+const GITHUB_TREE_BASE = 'https://github.com/apache/doris-website/tree/master/';
+
+function sourceToEditUrl(source: string | undefined): string {
+    if (!source) return GITHUB_TREE_BASE;
+    return `${GITHUB_TREE_BASE}${source.replace(/^@site\//, '')}`;
+}
+
+/**
+ * Decide if the toc should be rendered, on mobile or desktop viewports
+ */
+function useDocTOC() {
+    const { frontMatter, toc } = useDoc();
+    const windowSize = useWindowSize();
+
+    const hidden = frontMatter.hide_table_of_contents;
+    const canRender = !hidden && toc.length > 0;
+
+    const mobile = canRender ? <DocItemTOCMobile /> : undefined;
+
+    const desktop = canRender && (windowSize === 'desktop' || windowSize === 'ssr') ? <DocItemTOCDesktop /> : undefined;
+
+    return {
+        hidden,
+        mobile,
+        desktop,
+    };
+}
+
+export default function DocItemLayout({ children }: Props): JSX.Element {
+    const docTOC = useDocTOC();
+    const { metadata } = useDoc();
+    const { pluginId, version, isLast } = useDocsVersion();
+    const {
+        i18n: { currentLocale },
+    } = useDocusaurusContext();
+    const [isNew, setIsNew] = useState(true);
+    const isZH = currentLocale === 'zh-CN';
+
+    // Older versioned docs keep their timestamp metadata for indexing, but only
+    // Dev, the latest stable version, community docs, and course lessons display it.
+    const showLastUpdate =
+        pluginId === 'community' ||
+        pluginId === 'course' ||
+        (pluginId === 'default' && (version === 'current' || isLast));
+    const canDisplayLastUpdate =
+        showLastUpdate && (metadata.lastUpdatedAt || metadata.lastUpdatedBy);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setIsNew(location.pathname.includes('what-is-new'));
+        }
+    }, [typeof window !== 'undefined' && location.pathname]);
+
+    if (pluginId === 'course') {
+        return (
+            <>
+                <ContentVisibility metadata={metadata} />
+                <DocItemContent>{children}</DocItemContent>
+            </>
+        );
+    }
+
+    return (
+        <div className="row">
+            <div className={clsx('col', !docTOC.hidden && styles.docItemCol)}>
+                <ContentVisibility metadata={metadata} />
+                <DocVersionBanner />
+                <div className={styles.docItemContainer}>
+                    <article>
+                        <div className={styles.mobileStickyHeader}>
+                            <MobileSidebarDrawer />
+                            <DocBreadcrumbs />
+                        </div>
+                        {/* <DocVersionBadge /> */}
+                        {docTOC.mobile}
+                        {canDisplayLastUpdate && (
+                            <div className={styles.lastUpdated}>
+                                <LastUpdated
+                                    lastUpdatedAt={metadata.lastUpdatedAt}
+                                    lastUpdatedBy={metadata.lastUpdatedBy}
+                                />
+                            </div>
+                        )}
+                        <DocItemContent>{children}</DocItemContent>
+                        <DocItemFooter />
+                    </article>
+                    <div className={`flex items-center text-sm lg:text-base justify-end lg:col mt-10`}>
+                        {isNew ? (
+                            <></>
+                        ) : (
+                            <Link to={sourceToEditUrl(metadata.source)} className={`mr-6 ${styles.footerBtn}`}>
+                                <DocsEdit /> <span className="ml-2">{isZH ? '编辑本页' : 'Edit this page'}</span>
+                            </Link>
+                        )}
+                        <Link
+                            to={`https://github.com/apache/doris-website/issues/new?title=Issue on docs&body=Path:${
+                                typeof window !== 'undefined' && location.pathname
+                            }`}
+                            className={`lg:mr-6 ${styles.footerBtn}`}
+                        >
+                            <DocsAttention /> <span className="ml-2">{isZH ? '反馈问题' : 'Report issue'}</span>
+                        </Link>
+                    </div>
+                    <DocItemPaginator />
+                </div>
+            </div>
+            {docTOC.desktop && <div className="col col--3">{docTOC.desktop}</div>}
+        </div>
+    );
+}

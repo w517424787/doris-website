@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Node Action
 
 ## Request
@@ -60,7 +41,7 @@ under the License.
 
 `GET /rest/v2/manager/node/brokers`
 
-### Description
+## 描述
 
 用于获取集群获取fe, be, broker节点信息。
 
@@ -175,7 +156,7 @@ brokers:
 
 `POST /rest/v2/manager/node/configuration_info`
 
-### Description
+## 描述
 
 configuration_name 用于获取节点配置项名称。  
 node_list 用于获取节点列表。  
@@ -301,7 +282,7 @@ node 用于指定返回哪些节点的配置项信息，默认为全部fe节点�
 }
 ```
     
-### Examples
+## 举例s
 
 1. 获取fe agent_task_resend_wait_time_ms 配置项信息：
 
@@ -352,7 +333,7 @@ node 用于指定返回哪些节点的配置项信息，默认为全部fe节点�
 
 `POST /rest/v2/manager/node/set_config/be`
 
-### Description
+## 描述
 
 用于修改fe或be节点配置值
 
@@ -396,7 +377,7 @@ persist为 true 表示永久修改， false 表示临时修改。永久修改重
 failed 表示修改失败的配置信息。
 ```
     
-### Examples
+## 举例s
 
 1. 修改fe 127.0.0.1:8030 节点中 agent_task_resend_wait_time_ms 和alter_table_timeout_second 配置值：
 
@@ -446,7 +427,7 @@ failed 表示修改失败的配置信息。
 
 `POST /rest/v2/manager/node/{action}/be`
 
-### Description
+## 描述
 
 用于添加/删除/下线 be 节点
 
@@ -479,7 +460,7 @@ code 0/1
 data ""/报错信息
 ```
 
-### Examples
+## 举例s
 
 1. 添加 be 节点
 
@@ -545,7 +526,7 @@ data ""/报错信息
 
 `POST /rest/v2/manager/node/{action}/fe`
 
-### Description
+## 描述
 
 用于添加/删除 fe 节点
 
@@ -576,7 +557,7 @@ code 0/1
 data ""/报错信息
 ```
 
-### Examples
+## 举例s
 
 1. 添加 FOLLOWER 节点
 

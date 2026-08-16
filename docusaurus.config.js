@@ -1,8 +1,210 @@
 const themes = require('prism-react-renderer').themes;
+const versionsPlugin = require('./config/versions-plugin');
+const VERSIONS = require('./versions.json');
+const { markdownBoldPlugin } = require('./config/markdown-bold-plugin');
+const { DEFAULT_VERSION } = require('./src/constant/version');
 const { ssrTemplate } = require('./config/ssrTemplate');
 const customDocusaurusPlugin = require('./config/custom-docusaurus-plugin');
-const versionsPlugin = require('./config/versions-plugin');
-const lightCodeTheme = themes.github;
+const REDIRECTS_4X = require('./config/redirects-4.x.json');
+const path = require('path');
+
+const BRAND_THEME_BOOTSTRAP = `(function () {
+    var theme = 'doris';
+    try {
+        var storedTheme = localStorage.getItem('doris-brand-theme');
+        var themes = ['doris', 'golden', 'blue', 'read', 'yellow-blue', 'purple', 'yellow-black', 'sky'];
+        if (themes.indexOf(storedTheme) !== -1) theme = storedTheme;
+    } catch (error) {}
+    document.documentElement.setAttribute('data-brand-theme', theme);
+
+    var kapaSelector = 'script[data-website-id="a5fb90df-217a-4097-95c0-80490220314b"]';
+    var kapaColors = {
+        doris: '#11A679',
+        golden: '#7B2CBF',
+        blue: '#2C2C34',
+        read: '#121212',
+        'yellow-blue': '#0066FF',
+        purple: '#7255A5',
+        'yellow-black': '#000000',
+        sky: '#3778B0'
+    };
+    var kapaColor = kapaColors[theme];
+    var observer;
+    function syncKapaScript(node) {
+        if (node.nodeType !== 1) return false;
+        var script = node.matches && node.matches(kapaSelector)
+            ? node
+            : node.querySelector && node.querySelector(kapaSelector);
+        if (!script) return false;
+        script.setAttribute('data-project-color', kapaColor);
+        if (observer) observer.disconnect();
+        return true;
+    }
+    observer = new MutationObserver(function (mutations) {
+        mutations.some(function (mutation) {
+            return Array.prototype.some.call(mutation.addedNodes, syncKapaScript);
+        });
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    syncKapaScript(document.documentElement);
+}());`;
+
+// Doris 101 remembers whether its module rail is collapsed. Applying the stored
+// choice before first paint keeps the rail from rendering expanded and then
+// snapping shut once React mounts on every lesson navigation.
+const COURSE_RAIL_BOOTSTRAP = `(function () {
+    try {
+        if (localStorage.getItem('doris-101-rail-collapsed') === 'true') {
+            document.documentElement.setAttribute('data-course-rail', 'collapsed');
+        }
+    } catch (error) {}
+}());`;
+
+// Per-document last-update timestamps, generated from git history by
+// scripts/last-update/generate.js and refreshed on demand via the
+// "Refresh Docs Last-Update Map" workflow. markdown.parseFrontMatter (below)
+// injects these as `last_update` front matter so the 2-hourly deploy renders
+// "last updated" without a full-history clone. Missing file / not-yet-generated
+// map → Docusaurus falls back to its own git lookup.
+let DOCS_LAST_UPDATE = {};
+try {
+    DOCS_LAST_UPDATE = require('./scripts/last-update/data.json');
+} catch (e) {
+    // Map not generated yet (e.g. first build before the workflow runs).
+}
+
+// Group every static in-site redirect by its target path so we can drive it
+// through @docusaurus/plugin-client-redirects' `createRedirects` callback.
+// The callback runs once per locale build with `existingPath` set to the
+// actual routes in that build — so each entry only fires when its target
+// truly exists. Plain `redirects:` array entries can't do that: the plugin
+// validates the whole array against the current locale's path list, which
+// rejects cross-locale targets (e.g. /zh-CN/... during an en-only build).
+function buildRedirectIndex() {
+    const index = {};
+    const add = (to, ...froms) => {
+        (index[to] = index[to] || []).push(...froms);
+    };
+
+    // /docs and /zh-CN/docs land on the default stable version's entry doc.
+    // `lastVersion: '4.x'` makes 4.x the stable version but its `path: '4.x'`
+    // keeps it under /docs/4.x/, so the bare /docs route has no generated
+    // page without this redirect.
+    add('/docs/4.x/getting-started/what-is-apache-doris', '/docs');
+    add('/zh-CN/docs/4.x/getting-started/what-is-apache-doris', '/zh-CN/docs');
+
+    // Decommissioned standalone pages whose content moved into the
+    // homepage/why-doris/download flows.
+    add('/why-doris/users', '/users');
+    add('/zh-CN/why-doris/users', '/zh-CN/users');
+    add('/download', '/download-next');
+    add('/zh-CN/download', '/zh-CN/download-next');
+
+    // The hand-curated /learning sitemap page was retired; Doris 101 is now
+    // the structured entry point for newcomers.
+    add('/course', '/learning');
+    add('/zh-CN/course', '/zh-CN/learning');
+
+    // /vendors lost its navigation entry in the new-homepage refactor and has
+    // no obvious successor page, so it lands on the homepage. Its source is
+    // parked at src/pages/_vendors (underscore = not routed).
+    add('/', '/vendors');
+    add('/zh-CN', '/zh-CN/vendors');
+
+    // /ecosystem/* was retired; its closest spiritual home is the Dev tree's
+    // Data Integration intro, which catalogs the same connector/tool families
+    // the old /ecosystem/ pages did.
+    add(
+        '/docs/dev/connection-integration/data-integration/intro',
+        '/ecosystem',
+        '/ecosystem/cluster-management',
+        '/ecosystem/connectors',
+        '/ecosystem/data-loading',
+        '/ecosystem/data-migration',
+        '/ecosystem/distributions-and-packaging',
+    );
+    add(
+        '/zh-CN/docs/dev/connection-integration/data-integration/intro',
+        '/zh-CN/ecosystem',
+        '/zh-CN/ecosystem/cluster-management',
+        '/zh-CN/ecosystem/connectors',
+        '/zh-CN/ecosystem/data-loading',
+        '/zh-CN/ecosystem/data-migration',
+        '/zh-CN/ecosystem/distributions-and-packaging',
+    );
+
+    // Old 4.x slugs that have no 1:1 counterpart in the new 4.x tree
+    // (which was reseeded from Dev). Generated by
+    // scripts/migrate-4.x/build-redirects.py from the diff between
+    // old-slugs.txt and new-slugs.txt.
+    for (const { from, to } of REDIRECTS_4X) {
+        add(to, from);
+    }
+
+    return index;
+}
+
+const REDIRECT_INDEX = buildRedirectIndex();
+
+
+// Allow filtering doc versions via environment variable.
+// Usage: DOCS_VERSIONS="current,4.x" yarn docusaurus build
+// This uses Docusaurus's native onlyIncludeVersions option
+// instead of modifying versions.json.
+const ONLY_VERSIONS = process.env.DOCS_VERSIONS
+    ? process.env.DOCS_VERSIONS.split(',').map(v => v.trim()).filter(Boolean)
+    : null;
+
+// Landing-only dev mode: when working on src/components/home-next or
+// use-cases-next, no docs/blog/search routes need to load. Setting
+// LANDING_ONLY=true disables every heavy content plugin, which drops
+// `yarn start` peak memory from ~20GB to ~1-2GB. Individual SKIP_* env
+// vars allow finer-grained control.
+const LANDING_ONLY = process.env.LANDING_ONLY === 'true';
+const SKIP_DOCS = LANDING_ONLY || process.env.SKIP_DOCS === 'true';
+const SKIP_BLOG = LANDING_ONLY || process.env.SKIP_BLOG === 'true';
+const SKIP_COMMUNITY = LANDING_ONLY || process.env.SKIP_COMMUNITY === 'true';
+const SKIP_RELEASES = LANDING_ONLY || process.env.SKIP_RELEASES === 'true';
+const SKIP_COURSE = LANDING_ONLY || process.env.SKIP_COURSE === 'true';
+const SKIP_SEARCH = LANDING_ONLY || process.env.SKIP_SEARCH === 'true';
+
+const LINK_BEHAVIOR_VALUES = new Set(['ignore', 'log', 'warn', 'throw']);
+function getBrokenLinkBehavior(envName, fallback) {
+    const value = process.env[envName];
+    return LINK_BEHAVIOR_VALUES.has(value) ? value : fallback;
+}
+
+const DEFAULT_BROKEN_LINK_BEHAVIOR = 'warn';
+
+const lightCodeTheme = themes.oneLight;
+
+const logoImg = '/images/logo-doris.svg';
+
+function getDocsVersions() {
+    const result = {
+        current: {
+            label: 'Dev',
+            path: 'dev',
+            banner: 'unreleased',
+        },
+    };
+    VERSIONS.map(version => {
+        result[version] = {
+            banner: 'none',
+        };
+        if (version === DEFAULT_VERSION) {
+            result[version].label = DEFAULT_VERSION;
+            result[version].path = DEFAULT_VERSION;
+        } else {
+            result[version].badge = false;
+        }
+    });
+    return result;
+}
+
+function getLatestVersion() {
+    return VERSIONS.includes(DEFAULT_VERSION) ? DEFAULT_VERSION : VERSIONS[0];
+}
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -11,35 +213,115 @@ const config = {
     tagline: 'Apache Doris',
     url: 'https://doris.apache.org',
     baseUrl: '/',
-    onBrokenLinks: 'ignore',
-    onBrokenMarkdownLinks: 'ignore',
+    onBrokenLinks: getBrokenLinkBehavior('DORIS_DOCUSAURUS_BROKEN_LINKS', DEFAULT_BROKEN_LINK_BEHAVIOR),
+    onBrokenMarkdownLinks: getBrokenLinkBehavior('DORIS_DOCUSAURUS_BROKEN_MARKDOWN_LINKS', DEFAULT_BROKEN_LINK_BEHAVIOR),
     favicon: 'images/favicon.ico',
     organizationName: 'Apache',
+    trailingSlash: false,
+    markdown: {
+        format: 'detect',
+        // Inject each document's last-update date (from the git-history map in
+        // scripts/last-update/data.json) as `last_update` front matter, so
+        // showLastUpdateTime can render it without the deploy build touching
+        // git. An explicit `last_update` in a file always wins.
+        parseFrontMatter: async ({ defaultParseFrontMatter, filePath, fileContent }) => {
+            const result = await defaultParseFrontMatter({ filePath, fileContent });
+            if (!result.frontMatter.last_update) {
+                const rel = path.relative(__dirname, filePath).split(path.sep).join('/');
+                const date = DOCS_LAST_UPDATE[rel];
+                if (date) {
+                    result.frontMatter.last_update = { date };
+                }
+            }
+            return result;
+        },
+    },
+    trailingSlash: true,
     i18n: {
         defaultLocale: 'en',
-        locales: ['en', 'zh-CN'],
+        locales: ['en', 'zh-CN', 'ja'],
         localeConfigs: {
             en: {
-                label: 'EN',
+                label: 'English',
                 htmlLang: 'en-US',
             },
             'zh-CN': {
                 label: '中文',
                 htmlLang: 'zh-Hans-CN',
             },
+            ja: {
+                label: '日本語',
+                htmlLang: 'ja-JP',
+            },
         },
     },
-    // scripts: ['/js/redirect.js'],
-    stylesheets: [
-        'https://fonts.googleapis.com/css?family=Montserrat:500',
-        'https://fonts.googleapis.com/css?family=Noto+Sans+SC:400',
+    headTags: [
+        {
+            tagName: 'script',
+            attributes: {},
+            innerHTML: BRAND_THEME_BOOTSTRAP,
+        },
+        {
+            tagName: 'script',
+            attributes: {},
+            innerHTML: COURSE_RAIL_BOOTSTRAP,
+        },
     ],
-    organizationName: 'apache/doris-website', // Usually your GitHub org/user name.
+    scripts: ['/js/custom-script.js',
+        {
+            async: true,
+            src: 'https://widget.kapa.ai/kapa-widget.bundle.js',
+            'data-website-id': 'a5fb90df-217a-4097-95c0-80490220314b',
+            'data-modal-title': 'Apache Doris AI',
+            'data-project-name': 'Apache Doris Website',
+            'data-button-hide': "true",
+            'data-modal-override-open-selector': "#navbar-ask-ai-btn",
+            'data-project-logo': 'https://cdn.selectdb.com/static/doris_1_3c42247c63.png',
+            'data-modal-image': 'https://cdn.selectdb.com/static/doris_logo_cc5a30d886.png',
+            'data-project-color': '#11A679',
+            'data-modal-disclaimer': 'This is a custom LLM with access to all [Doris documentation](https://doris.apache.org/docs/4.x/gettingStarted/what-is-apache-doris).',
+            'data-consent-required': true,
+            'data-consent-screen-disclaimer': "By clicking &quot;I agree, let's chat&quot;, you consent to the use of the AI assistant in accordance with kapa.ai's [Privacy Policy](https://www.kapa.ai/content/privacy-policy). This service uses reCAPTCHA, which requires your consent to Google's [Privacy Policy](https://policies.google.com/privacy) and [Terms of Service](https://policies.google.com/terms). By proceeding, you explicitly agree to both kapa.ai's and Google's privacy policies.",
+            'data-user-analytics-cookie-enabled': false,
+            'data-bot-protection-mechanism': "hcaptcha"
+        }
+    ],
+    stylesheets: [
+        {
+            href: '/css/katex.min.css',
+            type: 'text/css',
+        },
+    ],
     projectName: 'apache/doris-website', // Usually your repo name.
+    customFields: {
+        // The public HTTPS reverse proxy is the default browser entry point.
+        // Local development can still replace this build-time value when needed.
+        profileAnalysisApiBaseUrl: process.env.PROFILE_ANALYSIS_API_BASE_URL ?? 'https://agent.velodb.io',
+        // hCaptcha site keys are public browser configuration. Never put the
+        // matching secret in this repository or in a Docusaurus environment variable.
+        profileAnalysisHCaptchaSiteKey:
+            process.env.PROFILE_ANALYSIS_HCAPTCHA_SITE_KEY ?? '40f4820a-dc48-466a-b106-960a57ac5bd0',
+    },
+    future: {
+        experimental_faster: true,
+    },
     plugins: [
         'docusaurus-plugin-sass',
+        'docusaurus-plugin-matomo',
+        // Use custom blog plugin
         versionsPlugin,
-        [
+        SKIP_COURSE ? null : [
+            'content-docs',
+            /** @type {import('@docusaurus/plugin-content-docs').Options} */
+            ({
+                id: 'course',
+                path: 'course',
+                routeBasePath: '/course',
+                sidebarPath: require.resolve('./sidebarsCourse.ts'),
+                showLastUpdateTime: true,
+            }),
+        ],
+        SKIP_COMMUNITY ? null : [
             'content-docs',
             /** @type {import('@docusaurus/plugin-content-docs').Options} */
             ({
@@ -47,78 +329,96 @@ const config = {
                 path: 'community',
                 routeBasePath: '/community',
                 sidebarPath: require.resolve('./sidebarsCommunity.json'),
+                // Community docs are unversioned; the document header always shows their
+                // last-updated date (see src/theme/DocItem/Layout).
+                showLastUpdateTime: true,
+            }),
+        ],
+        SKIP_RELEASES ? null : [
+            'content-docs',
+            /** @type {import('@docusaurus/plugin-content-docs').Options} */
+            ({
+                id: 'releases',
+                path: 'releasenotes',
+                routeBasePath: '/releases',
+                sidebarPath: require.resolve('./sidebarsReleases.json'),
             }),
         ],
         process.env.NODE_ENV === 'development' ? null : customDocusaurusPlugin,
-        [
-            '@docusaurus/plugin-pwa',
-            {
-                debug: false,
-                offlineModeActivationStrategies: ['standalone', 'queryString', 'mobile'],
-                injectManifestConfig: {
-                    globPatterns: ['**/*.{json,pdf,docx,xlsx,html,css,js,png,svg,ico,jpg,jpeg}'],
+        async function tailwindcssPlugin(context, options) {
+            return {
+                name: 'docusaurus-tailwindcss',
+                configurePostCss(postcssOptions) {
+                    // Appends TailwindCSS and AutoPrefixer
+                    postcssOptions.plugins.push(require('tailwindcss'));
+                    postcssOptions.plugins.push(require('autoprefixer'));
+                    return postcssOptions;
                 },
-                pwaHead: [
-                    {
-                        tagName: 'link',
-                        rel: 'icon',
-                        href: '/images/logo-only.png',
-                    },
-                    {
-                        tagName: 'link',
-                        rel: 'manifest',
-                        href: '/manifest.json',
-                    },
-                    {
-                        tagName: 'meta',
-                        name: 'theme-color',
-                        content: '#FFFFFF',
-                    },
-                    {
-                        tagName: 'meta',
-                        name: 'apple-mobile-web-app-capable',
-                        content: 'yes',
-                    },
-                    {
-                        tagName: 'meta',
-                        name: 'apple-mobile-web-app-status-bar-style',
-                        content: '#000',
-                    },
-                    {
-                        tagName: 'link',
-                        rel: 'apple-touch-icon',
-                        href: '/img/docusaurus.png',
-                    },
-                    {
-                        tagName: 'link',
-                        rel: 'mask-icon',
-                        href: '/img/docusaurus.svg',
-                        color: 'rgb(37, 194, 160)',
-                    },
-                    {
-                        tagName: 'meta',
-                        name: 'msapplication-TileImage',
-                        content: '/img/docusaurus.png',
-                    },
-                    {
-                        tagName: 'meta',
-                        name: 'msapplication-TileColor',
-                        content: '#000',
-                    },
-                ],
-            },
-        ],
+            };
+        },
         [
             '@docusaurus/plugin-client-redirects',
             {
                 fromExtensions: ['html', 'htm'],
                 redirects: [
-                    // /docs/oldDoc -> /docs/newDoc
+                    // Only external-target redirects belong here. Anything
+                    // pointing at an in-site path must go through
+                    // createRedirects below, otherwise plugin-client-redirects
+                    // rejects cross-locale entries during single-locale builds.
                     {
-                        from: '/docs/dev/summary/basic-summary',
-                        to: '/docs/dev/get-starting/quick-start',
+                        from: '/slack',
+                        to: 'https://join.slack.com/t/apachedoriscommunity/shared_invite/zt-3wvgezmm8-lh5XRaLg0~9AF44ojdIBfw'
                     },
                 ],
+                createRedirects(existingPath) {
+                    const redirects = [];
+
+                    // Static redirects indexed by target. Trim trailing slash
+                    // for the lookup since Docusaurus' trailingSlash:true
+                    // gives us paths like /docs/4.x/foo/. The locale root
+                    // ('/' or '/zh-CN/') is the one path whose slash is the
+                    // whole path, so keep it as-is.
+                    const normalized = existingPath === '/' ? '/' : existingPath.replace(/\/$/, '');
+                    if (REDIRECT_INDEX[normalized]) {
+                        redirects.push(...REDIRECT_INDEX[normalized]);
+                    }
+
+                    // Legacy `/gettingStarted/what-is-new` slug → renamed to
+                    // `/gettingStarted/what-is-apache-doris`. Register the old
+                    // path as a redirect for any existing version that has the
+                    // new slug.
+                    if (existingPath.includes('/gettingStarted/what-is-apache-doris')) {
+                        redirects.push(
+                            existingPath.replace(
+                                '/gettingStarted/what-is-apache-doris',
+                                '/gettingStarted/what-is-new',
+                            ),
+                        );
+                    }
+
+                    // 3.x version-prefix variants: legacy URLs sometimes used
+                    // /docs/3.0/ (the dot release) or omitted the version
+                    // segment entirely. Map both shapes onto the canonical
+                    // /docs/3.x/ path.
+                    if (existingPath.startsWith('/docs/3.x/')) {
+                        redirects.push(
+                            existingPath.replace('/docs/3.x/', '/docs/'),
+                            existingPath.replace('/docs/3.x/', '/docs/3.0/'),
+                        );
+                    }
+
+                    // Redirect old versioned releasenotes URLs to new /releases/ paths
+                    // e.g. /docs/4.x/releasenotes/v4.0/release-4.0.5 -> /releases/v4.0/release-4.0.5
+                    if (existingPath.startsWith('/releases/')) {
+                        const releasePath = existingPath.replace('/releases/', '');
+                        const oldVersionPrefixes = ['4.x', '3.x', '2.1', '2.0', '1.2', '4.0', '3.1', '3.0', 'dev'];
+                        for (const ver of oldVersionPrefixes) {
+                            redirects.push(`/docs/${ver}/releasenotes/${releasePath}`);
+                        }
+                    }
+
+                    return redirects.length > 0 ? redirects : undefined;
+                },
             },
         ],
     ],
@@ -127,165 +427,112 @@ const config = {
             'classic',
             /** @type {import('@docusaurus/preset-classic').Options} */
             ({
-                docs: {
-                    lastVersion: 'current',
-                    versions: {
-                        1.2: {
-                            banner: 'none',
-                            badge: false,
-                        },
-                        current: {
-                            label: 'dev',
-                            path: 'dev',
-                            badge: false,
-                        },
-                    },
-                    sidebarPath: require.resolve('./sidebars.json'),
-                    editUrl: ({ locale, versionDocsDirPath, docPath }) => {
-                        if (versionDocsDirPath === 'versioned_docs/version-dev') {
-                            return `https://github.com/apache/doris/edit/master/docs/${locale}/docs/${docPath}`;
-                        }
-                    },
+                docs: SKIP_DOCS ? false : {
+                    includeCurrentVersion: true,
+                    sidebarPath: require.resolve('./sidebars.ts'),
+                    ...(ONLY_VERSIONS && { onlyIncludeVersions: ONLY_VERSIONS }),
+                    // When filtering versions, lastVersion must be in the
+                    // included list. Fall back to the first included version.
+                    lastVersion: ONLY_VERSIONS && !ONLY_VERSIONS.includes(getLatestVersion())
+                        ? ONLY_VERSIONS[0]
+                        : getLatestVersion(),
+                    versions: getDocsVersions(),
+                    // editUrl: ({ locale, versionDocsDirPath, docPath }) => {
+                    //     return `https://github.com/apache/doris-website/edit/master/docs/${locale}/docs/${docPath}`;
+                    //     // if (versionDocsDirPath === 'versioned_docs/version-dev') {
+                    //     //     return `https://github.com/apache/doris-website/edit/master/docs/${locale}/docs/${docPath}`;
+                    //     // }
+                    // },
                     showLastUpdateAuthor: false,
-                    showLastUpdateTime: false,
+                    // Date comes from the injected `last_update` front matter
+                    // (markdown.parseFrontMatter). The DocItem layout limits
+                    // which versions actually display it (Dev + latest stable).
+                    showLastUpdateTime: true,
+                    remarkPlugins: [markdownBoldPlugin, require('remark-math')],
+                    rehypePlugins: [
+                        [
+                            require('rehype-katex'),
+                            {
+                                strict: process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true' ? false : 'warn',
+                            }
+                        ]
+                    ]
                 },
-                blog: {
-                    blogTitle: 'Blogs',
-                    blogDescription: 'Apache Doris Blog',
+                blog: SKIP_BLOG ? false : {
+                    blogTitle: 'Apache Doris - Blog | Latest news and events ',
+                    blogDescription:
+                        'Explore how Doris empower lakehouse, adhoc analysis, customer-facing analysis and various scenarios',
                     postsPerPage: 'ALL',
                     blogSidebarCount: 0,
                     showReadingTime: false,
+                    onUntruncatedBlogPosts: 'ignore',
+                    onInlineAuthors: 'ignore',
                 },
                 theme: {
                     customCss: require.resolve('./src/scss/custom.scss'),
                 },
-                gtag: {
-                    trackingID: 'G-DT7W9E9722',
-                    anonymizeIP: true,
+                sitemap: {
+                    changefreq: 'weekly',
+                    priority: 0.5,
+                    filename: 'sitemap.xml',
+                    createSitemapItems: async params => {
+                        const { defaultCreateSitemapItems, ...rest } = params;
+                        const items = await defaultCreateSitemapItems(rest);
+                        const filteredItems = items.filter(item => {
+                            const pathname = new URL(item.url).pathname.replace(/\/+$/, '');
+                            if (['/search', '/ja/search', '/zh-CN/search'].includes(pathname)) return false;
+                            return true;
+                        });
+                        for (let item of filteredItems) {
+                            if (item.url.includes('docs')) {
+                                item.changefreq = 'daily';
+                                item.priority = 0.8;
+                            }
+                            if (item.url.includes('docs/1.2')) {
+                                item.priority = 0.2;
+                            }
+                        }
+                        return filteredItems;
+                    },
                 },
             }),
         ],
     ],
-    themes: [
+    themes: SKIP_SEARCH ? [] : [
         [
-            '@easyops-cn/docusaurus-search-local',
+            '@yang1666204/docusaurus-search-local',
             {
                 hashed: true,
-                language: ['en', 'zh'],
+                language: ['en', 'zh', 'ja'],
                 highlightSearchTermsOnTargetPage: true,
                 // indexPages: true,
                 indexDocs: true,
-                docsRouteBasePath: '/',
+                docsRouteBasePath: ['docs', 'course', 'ja/docs', 'ja/course', 'zh-CN/docs', 'zh-CN/course'],
                 indexBlog: false,
                 explicitSearchResultPath: true,
+                searchBarShortcut: true,
+                searchBarShortcutHint: true,
+                searchResultLimits: 100,
+                searchContextByPaths: ['docs', 'course'],
+                useAllContextsWithNoSearchContext: false,
+                ignoreFiles: [/^docs\/(?:[^/]+\/)?key-features\//],
             },
         ],
     ],
     themeConfig:
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
-            announcementBar: {
-                id: 'support_us',
-                content: `<a href="https://github.com/apache/doris" target="_blank" style="display: flex; width: 100%; align-items: center; justify-content: center; margin-left: 4px; text-decoration: none; color: white">Do you like Apache Doris？Give us a 🌟 on GitHub 
-                        <img style="width: 1.2rem; height: 1.2rem; margin-left: 0.4rem;" src="/images/github-white-icon.svg">
-                    </a>`,
-                backgroundColor: '#3C2FD4',
-                textColor: '#FFFFFF',
-                isCloseable: true,
+            matomo: {
+                matomoUrl: 'https://analytics.apache.org/',
+                siteId: '43',
+                phpLoader: 'matomo.php',
+                jsLoader: 'matomo.js',
             },
+            // NavbarNext renders the actual top navigation (driven by the
+            // home-next code, not themeConfig). This stub stays only because
+            // Docusaurus' theme validator wants the key present.
             navbar: {
-                title: '',
-                logo: {
-                    alt: 'Apache Doris',
-                    src: 'https://cdnd.selectdb.com/images/logo.svg',
-                },
-                items: [
-                    { to: '/', label: 'Home', position: 'left', exact: true },
-                    {
-                        type: 'dropdown',
-                        position: 'left',
-                        label: 'Docs',
-                        to: '/docs/dev/get-starting/what-is-apache-doris',
-                        items: [
-                            {
-                                label: 'Learning Path',
-                                to: '/learning',
-                                align: 'left',
-                            },
-                            {
-                                label: 'Getting Started',
-                                to: '/docs/dev/get-starting/quick-start',
-                                align: 'left',
-                            },
-                            {
-                                label: 'Install and Deploy',
-                                to: '/docs/dev/install/standard-deployment',
-                                align: 'left',
-                            },
-                            {
-                                label: 'FAQ',
-                                to: '/docs/dev/faq/install-faq',
-                                align: 'left',
-                            },
-                            // {
-                            //     label: 'More Docs',
-                            //     to: '/docs/dev/get-starting/',
-                            //     align: 'left',
-                            // }
-                        ],
-                    },
-                    { to: '/blog', label: 'Blogs', position: 'left' },
-                    {
-                        label: 'Community',
-                        type: 'dropdown',
-                        to: '/community/join-community',
-                        position: 'left',
-                        // docsPluginId: 'community',
-                        items: [
-                            {
-                                label: 'Join Community',
-                                to: '/community/join-community',
-                                align: 'left',
-                            },
-                            {
-                                label: 'Doris Team',
-                                to: '/community/team',
-                                align: 'left',
-                            },
-                            {
-                                label: 'How to Contribute',
-                                to: '/community/how-to-contribute/',
-                                align: 'left',
-                            },
-                            {
-                                label: 'Developer Guide',
-                                to: '/community/developer-guide/debug-tool',
-                                align: 'left',
-                            },
-                        ],
-                    },
-                    { to: '/users', label: 'User Stories', position: 'left' },
-                    {
-                        type: 'docsVersionDropdown',
-                        position: 'right',
-                    },
-                    {
-                        type: 'localeDropdown',
-                        position: 'right',
-                    },
-                    // {
-                    //     href: 'https://github.com/apache/doris',
-                    //     className: 'header-right-button-github',
-                    //     position: 'right',
-                    //     label: 'GitHub',
-                    // },
-                    {
-                        href: '/download',
-                        className: 'header-right-button-primary navbar-download-mobile',
-                        label: 'Download',
-                        position: 'right',
-                    },
-                ],
+                items: [],
             },
             footer: {
                 links: [
@@ -313,6 +560,10 @@ const config = {
                                 href: 'https://privacy.apache.org/policies/privacy-policy-public.html',
                             },
                             {
+                                label: 'Security',
+                                href: 'https://www.apache.org/security/',
+                            },
+                            {
                                 label: 'Thanks',
                                 href: 'https://www.apache.org/foundation/thanks.html',
                             },
@@ -326,45 +577,41 @@ const config = {
                                 href: '/download',
                             },
                             {
-                                label: 'Docs',
-                                href: '/learning',
-                            },
-                            {
-                                label: 'Blogs',
-                                href: '/blog',
-                            },
-                            {
-                                label: 'User Stories',
-                                href: '/users',
+                                label: 'Brand Assets',
+                                href: '/brand-assets',
                             },
                             // {
-                            //     label: 'Courses (coming soon)',
-                            //     href: '/courses',
+                            //     label: 'Docs',
+                            //     href: '/docs/get-starting/quick-start',
                             // },
+                            {
+                                label: 'Blog',
+                                href: '/blog',
+                            },
                         ],
                     },
                     {
-                        title: 'Community Support',
+                        title: 'Community',
                         items: [
                             {
-                                label: 'Doris Team',
-                                href: '/community/team',
+                                label: 'How to contribute',
+                                href: '/community/how-to-contribute/contribute-to-doris',
                             },
                             {
-                                label: 'How to Contribute',
-                                href: '/community/how-to-contribute/',
-                            },
-                            {
-                                label: 'Source Code',
+                                label: 'Source code',
                                 href: 'https://github.com/apache/doris/',
                             },
                             {
-                                label: 'Improvement Proposal',
-                                href: 'https://github.com/apache/doris/discussions',
+                                label: 'Doris team',
+                                href: '/community/team',
                             },
                             {
                                 label: 'Roadmap',
-                                href: 'https://github.com/apache/doris/issues/16392',
+                                href: '/community/roadmap',
+                            },
+                            {
+                                label: 'Improvement proposal',
+                                href: 'https://cwiki.apache.org/confluence/display/DORIS/Doris+Improvement+Proposals',
                             },
                         ],
                     },
@@ -395,7 +642,7 @@ const config = {
             //     },
             // ],s
         }),
-    ssrTemplate,
+    ssrTemplate
 };
 
 module.exports = config;

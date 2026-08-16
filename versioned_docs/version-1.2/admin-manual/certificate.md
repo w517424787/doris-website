@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements. See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership. The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License. You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied. See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Key Certificate Configuration
 
 Enabling SSL functionality in Doris requires configuring both a CA key certificate and a server-side key certificate. To enable mutual authentication, a client-side key certificate must also be generated:
@@ -37,7 +18,8 @@ Enabling SSL functionality in Doris requires configuring both a CA key certifica
 In addition to the Doris default certificate file, you can also generate a custom certificate file through `openssl`. Here are the steps (refer to [Creating SSL Certificates and Keys Using OpenSSL](https://dev.mysql.com/doc/refman/8.0/en/creating-ssl-files-using-openssl.html)):
 
 1. Generate the CA, server-side, and client-side keys and certificates:
-```bash
+
+```shell
 # Generate the CA certificate
 openssl genrsa 2048 > ca-key.pem
 openssl req -new -x509 -nodes -days 3600 \
@@ -61,17 +43,19 @@ openssl x509 -req -in client-req.pem -days 3600 \
 ```
 
 2. Verify the created certificates:
-```bash
+
+```shell
 openssl verify -CAfile ca.pem server-cert.pem client-cert.pem
 ```
 
 3. Combine your key and certificate in a PKCS#12 (P12) bundle.
-```bash
+
+```shell
 # Package the CA key and certificate
 openssl pkcs12 -inkey ca-key.pem -in ca.pem -export -out ca_certificate.p12
 
 # Package the server-side key and certificate
-openssl pkcs12 -inkey server-key.pem -in server.pem -export -out server_certificate.p12
+openssl pkcs12 -inkey server-key.pem -in server-cert.pem -export -out server_certificate.p12
 ```
 
 >[reference documents](https://www.ibm.com/docs/en/api-connect/2018.x?topic=overview-generating-self-signed-certificate-using-openssl)

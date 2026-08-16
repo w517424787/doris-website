@@ -5,32 +5,13 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## INSERT
 
 ### Name
 
 INSERT
 
-### Description
+## 描述
 
 该语句是完成数据插入操作。
 
@@ -68,7 +49,7 @@ INSERT INTO table_name
 
 当前执行 `INSERT` 语句时，对于有不符合目标表格式的数据，默认的行为是过滤，比如字符串超长等。但是对于有要求数据不能够被过滤的业务场景，可以通过设置会话变量 `enable_insert_strict` 为 `true` 来确保当有数据被过滤掉的时候，`INSERT` 不会被执行成功。
 
-### Example
+## 举例
 
 `test` 表包含两个列`c1`, `c2`。
 
@@ -214,7 +195,7 @@ INSERT INTO test WITH LABEL `label1` (c1, c2) SELECT * from test2;
 
 2. 超时时间
 
-   <version since="dev"></version>
+    
    INSERT 操作的超时时间由 [会话变量](../../../../advanced/variables.md) `insert_timeout` 控制。默认为4小时。超时则作业会被取消。
 
 3. Label 和原子性

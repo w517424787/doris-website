@@ -1,30 +1,9 @@
 ---
 {
-    "title": "Data replica management",
+    "title": "Data Replica Management",
     "language": "en"
 }
 ---
-
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
-# Data replica management
 
 Beginning with version 0.9.0, Doris introduced an optimized replica management strategy and supported a richer replica status viewing tool. This document focuses on Doris data replica balancing, repair scheduling strategies, and replica management operations and maintenance methods. Help users to more easily master and manage the replica status in the cluster.
 
@@ -270,14 +249,14 @@ Tablet state view mainly looks at the state of the tablet, as well as the state 
 	Through `SHOW PROC'/cluster_health/tablet_health'; `commands can view the replica status of the entire cluster.
 
      ```
-    +-------+--------------------------------+-----------+------------+-------------------+----------------------+----------------------+--------------+----------------------------+-------------------------+-------------------+---------------------+----------------------+----------------------+------------------+-----------------------------+-----------------+-------------+------------+
+    +-------+--------------------------------+-----------+------------+-------------------+----
     | DbId  | DbName                         | TabletNum | HealthyNum | ReplicaMissingNum | VersionIncompleteNum | ReplicaRelocatingNum | RedundantNum | ReplicaMissingInClusterNum | ReplicaMissingForTagNum | ForceRedundantNum | ColocateMismatchNum | ColocateRedundantNum | NeedFurtherRepairNum | UnrecoverableNum | ReplicaCompactionTooSlowNum | InconsistentNum | OversizeNum | CloningNum |
-    +-------+--------------------------------+-----------+------------+-------------------+----------------------+----------------------+--------------+----------------------------+-------------------------+-------------------+---------------------+----------------------+----------------------+------------------+-----------------------------+-----------------+-------------+------------+
+    +-------+--------------------------------+-----------+------------+-------------------+----
     | 10005 | default_cluster:doris_audit_db | 84        | 84         | 0                 | 0                    | 0                    | 0            | 0                          | 0                       | 0                 | 0                   | 0                    | 0                    | 0                | 0                           | 0               | 0           | 0          |
     | 13402 | default_cluster:ssb1           | 709       | 708        | 1                 | 0                    | 0                    | 0            | 0                          | 0                       | 0                 | 0                   | 0                    | 0                    | 0                | 0                           | 0               | 0           | 0          |
     | 10108 | default_cluster:tpch1          | 278       | 278        | 0                 | 0                    | 0                    | 0            | 0                          | 0                       | 0                 | 0                   | 0                    | 0                    | 0                | 0                           | 0               | 0           | 0          |
     | Total | 3                              | 1071      | 1070       | 1                 | 0                    | 0                    | 0            | 0                          | 0                       | 0                 | 0                   | 0                    | 0                    | 0                | 0                           | 0               | 0           | 0          |
-    +-------+--------------------------------+-----------+------------+-------------------+----------------------+----------------------+--------------+----------------------------+-------------------------+-------------------+---------------------+----------------------+----------------------+------------------+-----------------------------+-----------------+-------------+------------+
+    +-------+--------------------------------+-----------+------------+-------------------+----
     ```
 
 	The `HealthyNum` column shows how many Tablets are in a healthy state in the corresponding database. `ReplicaCompactionTooSlowNum` column shows how many Tablets are in a too many versions state in the corresponding database, `InconsistentNum` column shows how many Tablets are in an inconsistent replica state in the corresponding database. The last `Total` line counts the entire cluster. Normally `TabletNum` and `HealthyNum` should be equal. If it's not equal, you can further see which Tablets are there. As shown in the figure above, one table in the ssb1 database is not healthy, you can use the following command to see which one is.
@@ -287,11 +266,11 @@ Tablet state view mainly looks at the state of the tablet, as well as the state 
 	Among them `13402` is the corresponding DbId.
 
    ```
-   +-----------------------+--------------------------+--------------------------+------------------+--------------------------------+-----------------------------+-----------------------+-------------------------+--------------------------+--------------------------+----------------------+---------------------------------+---------------------+-----------------+
+   +-----------------------+--------------------------+--------------------------+-------------
    | ReplicaMissingTablets | VersionIncompleteTablets | ReplicaRelocatingTablets | RedundantTablets | ReplicaMissingInClusterTablets | ReplicaMissingForTagTablets | ForceRedundantTablets | ColocateMismatchTablets | ColocateRedundantTablets | NeedFurtherRepairTablets | UnrecoverableTablets | ReplicaCompactionTooSlowTablets | InconsistentTablets | OversizeTablets |
-   +-----------------------+--------------------------+--------------------------+------------------+--------------------------------+-----------------------------+-----------------------+-------------------------+--------------------------+--------------------------+----------------------+---------------------------------+---------------------+-----------------+
+   +-----------------------+--------------------------+--------------------------+-------------
    | 14679                 |                          |                          |                  |                                |                             |                       |                         |                          |                          |                      |                                 |                     |                 |
-   +-----------------------+--------------------------+--------------------------+------------------+--------------------------------+-----------------------------+-----------------------+-------------------------+--------------------------+--------------------------+----------------------+---------------------------------+---------------------+-----------------+
+   +-----------------------+--------------------------+--------------------------+-------------
    ```
 
 	The figure above shows the specific unhealthy Tablet ID (14679). Later we'll show you how to view the status of each copy of a specific Tablet.
@@ -303,16 +282,16 @@ Tablet state view mainly looks at the state of the tablet, as well as the state 
 	`ADMIN SHOW REPLICA STATUS FROM tbl1 PARTITION (p1, p2) WHERE STATUS = "OK";`
 
 	```
-	+----------+-----------+-----------+---------+-------------------+--------------------+------------------+------------+------------+-------+--------+--------+
+	+----------+-----------+-----------+---------+-------------------+--------------------+
 	| TabletId | ReplicaId | BackendId | Version | LastFailedVersion | LastSuccessVersion | CommittedVersion | SchemaHash | VersionNum | IsBad | State  | Status |
-	+----------+-----------+-----------+---------+-------------------+--------------------+------------------+------------+------------+-------+--------+--------+
+	+----------+-----------+-----------+---------+-------------------+--------------------+
 	| 29502429 | 29502432  | 10006     | 2       | -1                | 2                  | 1                | -1         | 2          | false | NORMAL | OK     |
 	| 29502429 | 36885996  | 10002     | 2       | -1                | -1                 | 1                | -1         | 2          | false | NORMAL | OK     |
 	| 29502429 | 48100551  | 10007     | 2       | -1                | -1                 | 1                | -1         | 2          | false | NORMAL | OK     |
 	| 29502433 | 29502434  | 10001     | 2       | -1                | 2                  | 1                | -1         | 2          | false | NORMAL | OK     |
 	| 29502433 | 44900737  | 10004     | 2       | -1                | -1                 | 1                | -1         | 2          | false | NORMAL | OK     |
 	| 29502433 | 48369135  | 10006     | 2       | -1                | -1                 | 1                | -1         | 2          | false | NORMAL | OK     |
-	+----------+-----------+-----------+---------+-------------------+--------------------+------------------+------------+------------+-------+--------+--------+
+	+----------+-----------+-----------+---------+-------------------+--------------------+
    ```
 
 	The status of all copies is shown here. Where `IsBad` is listed as `true`, the copy is damaged. The `Status` column displays other states. Specific status description, you can see help through `HELP ADMIN SHOW REPLICA STATUS`.
@@ -322,13 +301,13 @@ Tablet state view mainly looks at the state of the tablet, as well as the state 
 	`SHOW TABLETS FROM tbl1;`
 
     ```
-	+----------+-----------+-----------+------------+---------+-------------+-------------------+-----------------------+------------------+----------------------+---------------+----------+----------+--------+-------------------------+--------------+----------------------+--------------+----------------------+----------------------+----------------------+
+	+----------+-----------+-----------+------------+---------+-------------+-------------------+
 	| TabletId | ReplicaId | BackendId | SchemaHash | Version | VersionHash | LstSuccessVersion | LstSuccessVersionHash | LstFailedVersion | LstFailedVersionHash | LstFailedTime | DataSize | RowCount | State  | LstConsistencyCheckTime | CheckVersion | 	CheckVersionHash | VersionCount | PathHash             | MetaUrl              | CompactionStatus     |
-	+----------+-----------+-----------+------------+---------+-------------+-------------------+-----------------------+------------------+----------------------+---------------+----------+----------+--------+-------------------------+--------------+----------------------+--------------+----------------------+----------------------+----------------------+
+	+----------+-----------+-----------+------------+---------+-------------+-------------------+
 	| 29502429 | 29502432  | 10006     | 1421156361 | 2       | 0           | 2                 | 0                     | -1               | 0                    | N/A           | 784      | 0        | NORMAL | N/A                     | -1           | 	-1               | 2            | -5822326203532286804 | url                  | url                  |
 	| 29502429 | 36885996  | 10002     | 1421156361 | 2       | 0           | -1                | 0                     | -1               | 0                    | N/A           | 784      | 0        | NORMAL | N/A                     | -1           | 	-1               | 2            | -1441285706148429853 | url                  | url                  |
 	| 29502429 | 48100551  | 10007     | 1421156361 | 2       | 0           | -1                | 0                     | -1               | 0                    | N/A           | 784      | 0        | NORMAL | N/A                     | -1           | 	-1               | 2            | -4784691547051455525 | url                  | url                  |
-	+----------+-----------+-----------+------------+---------+-------------+-------------------+-----------------------+------------------+----------------------+---------------+----------+----------+--------+-------------------------+--------------+----------------------+--------------+----------------------+----------------------+----------------------+  
+	+----------+-----------+-----------+------------+---------+-------------+-------------------+
     ```
    
 	The figure above shows some additional information, including copy size, number of rows, number of versions, where the data path is located.
@@ -364,11 +343,11 @@ Tablet state view mainly looks at the state of the tablet, as well as the state 
 	`SHOW TABLET 29502553;`
 
     ```
-	+------------------------+-----------+---------------+-----------+----------+----------+-------------+----------+--------+---------------------------------------------------------------------------+
+	+------------------------+-----------+---------------+-----------+----------+----------+
 	| DbName                 | TableName | PartitionName | IndexName | DbId     | TableId  | PartitionId | IndexId  | IsSync | DetailCmd                                                                 |
-	+------------------------+-----------+---------------+-----------+----------+----------+-------------+----------+--------+---------------------------------------------------------------------------+
+	+------------------------+-----------+---------------+-----------+----------+----------+
 	| default_cluster:test   | test      | test          | test      | 29502391 | 29502428 | 29502427    | 29502428 | true   | SHOW PROC '/dbs/29502391/29502428/partitions/29502427/29502428/29502553'; |
-	+------------------------+-----------+---------------+-----------+----------+----------+-------------+----------+--------+---------------------------------------------------------------------------+
+	+------------------------+-----------+---------------+-----------+----------+----------+
     ```
 
 	The figure above shows the database, tables, partitions, roll-up tables and other information corresponding to this tablet. The user can copy the command in the `DetailCmd` command to continue executing:
@@ -376,13 +355,13 @@ Tablet state view mainly looks at the state of the tablet, as well as the state 
 	`Show Proc'/DBS/29502391/29502428/Partitions/29502427/29502428/29502553;`
 
     ```
-	+-----------+-----------+---------+-------------+-------------------+-----------------------+------------------+----------------------+---------------+------------+----------+----------+--------+-------+--------------+----------------------+
+	+-----------+-----------+---------+-------------+-------------------+-----------------------+
 	| ReplicaId | BackendId | Version | VersionHash | LstSuccessVersion | LstSuccessVersionHash | LstFailedVersion | LstFailedVersionHash | LstFailedTime | SchemaHash | DataSize | RowCount | State  | IsBad | VersionCount | PathHash             |
-	+-----------+-----------+---------+-------------+-------------------+-----------------------+------------------+----------------------+---------------+------------+----------+----------+--------+-------+--------------+----------------------+
+	+-----------+-----------+---------+-------------+-------------------+-----------------------+
 	| 43734060  | 10004     | 2       | 0           | -1                | 0                     | -1               | 0                    | N/A           | -1         | 784      | 0        | NORMAL | false | 2            | -8566523878520798656 |
 	| 29502555  | 10002     | 2       | 0           | 2                 | 0                     | -1               | 0                    | N/A           | -1         | 784      | 0        | NORMAL | false | 2            | 1885826196444191611  |
 	| 39279319  | 10007     | 2       | 0           | -1                | 0                     | -1               | 0                    | N/A           | -1         | 784      | 0        | NORMAL | false | 2            | 1656508631294397870  |
-	+-----------+-----------+---------+-------------+-------------------+-----------------------+------------------+----------------------+---------------+------------+----------+----------+--------+-------+--------------+----------------------+
+	+-----------+-----------+---------+-------------+-------------------+-----------------------+
     ```
    
 	The figure above shows all replicas of the corresponding Tablet. The content shown here is the same as `SHOW TABLETS FROM tbl1;`. But here you can clearly see the status of all copies of a specific Tablet.
@@ -394,11 +373,11 @@ Tablet state view mainly looks at the state of the tablet, as well as the state 
 	`SHOW PROC '/cluster_balance/pending_tablets';`
 
     ```
-    +----------+--------+-----------------+---------+----------+----------+-------+---------+--------+----------+---------+---------------------+---------------------+---------------------+----------+------+-------------+---------------+---------------------+------------+---------------------+--------+---------------------+-------------------------------+
+    +----------+--------+-----------------+---------+----------+----------+-------+---------+
     | TabletId | Type   | Status          | State   | OrigPrio | DynmPrio | SrcBe | SrcPath | DestBe | DestPath | Timeout | Create              | LstSched            | LstVisit            | Finished | Rate | FailedSched | FailedRunning | LstAdjPrio          | VisibleVer | VisibleVerHash      | CmtVer | CmtVerHash          | ErrMsg                        |
-    +----------+--------+-----------------+---------+----------+----------+-------+---------+--------+----------+---------+---------------------+---------------------+---------------------+----------+------+-------------+---------------+---------------------+------------+---------------------+--------+---------------------+-------------------------------+
+    +----------+--------+-----------------+---------+----------+----------+-------+---------+
     | 4203036  | REPAIR | REPLICA_MISSING | PENDING | HIGH     | LOW      | -1    | -1      | -1     | -1       | 0       | 2019-02-21 15:00:20 | 2019-02-24 11:18:41 | 2019-02-24 11:18:41 | N/A      | N/A  | 2           | 0             | 2019-02-21 15:00:43 | 1          | 0                   | 2      | 0                   | unable to find source replica |
-    +----------+--------+-----------------+---------+----------+----------+-------+---------+--------+----------+---------+---------------------+---------------------+---------------------+----------+------+-------------+---------------+---------------------+------------+---------------------+--------+---------------------+-------------------------------+
+    +----------+--------+-----------------+---------+----------+----------+-------+---------+
     ```
    
 	The specific meanings of each column are as follows:
@@ -461,9 +440,9 @@ Tablet state view mainly looks at the state of the tablet, as well as the state 
 	`SHOW PROC '/cluster_balance/cluster_load_stat/location_default/HDD';`
 
 	```
-	+----------+-----------------+-----------+---------------+----------------+-------------+------------+----------+-----------+--------------------+-------+
+	+----------+-----------------+-----------+---------------+----------------+-------------+
 	| BeId     | Cluster         | Available | UsedCapacity  | Capacity       | UsedPercent | ReplicaNum | CapCoeff | ReplCoeff | Score              | Class |
-	+----------+-----------------+-----------+---------------+----------------+-------------+------------+----------+-----------+--------------------+-------+
+	+----------+-----------------+-----------+---------------+----------------+-------------+
 	| 10003    | default_cluster | true      | 3477875259079 | 19377459077121 | 17.948      | 493477     | 0.5      | 0.5       | 0.9284678149967587 | MID   |
 	| 10002    | default_cluster | true      | 3607326225443 | 19377459077121 | 18.616      | 496928     | 0.5      | 0.5       | 0.948660871419998  | MID   |
 	| 10005    | default_cluster | true      | 3523518578241 | 19377459077121 | 18.184      | 545331     | 0.5      | 0.5       | 0.9843539990641831 | MID   |
@@ -472,7 +451,7 @@ Tablet state view mainly looks at the state of the tablet, as well as the state 
 	| 10004    | default_cluster | true      | 3506558163744 | 15501967261697 | 22.620      | 468957     | 0.5      | 0.5       | 1.0228319835582569 | MID   |
 	| 10007    | default_cluster | true      | 4036460478905 | 19377459077121 | 20.831      | 551645     | 0.5      | 0.5       | 1.057279369420761  | MID   |
 	| 10000    | default_cluster | true      | 4369719923760 | 19377459077121 | 22.551      | 547175     | 0.5      | 0.5       | 1.0964036415787461 | MID   |
-	+----------+-----------------+-----------+---------------+----------------+-------------+------------+----------+-----------+--------------------+-------+
+	+----------+-----------------+-----------+---------------+----------------+-------------+
 	```
 
 	Some of these columns have the following meanings:
@@ -491,15 +470,15 @@ Tablet state view mainly looks at the state of the tablet, as well as the state 
 	`SHOW PROC '/cluster_balance/cluster_load_stat/location_default/HDD/10001';`
 
     ```
-	+------------------+------------------+---------------+---------------+---------+--------+----------------------+
+	+------------------+------------------+---------------+---------------+---------+--------+
 	| RootPath         | DataUsedCapacity | AvailCapacity | TotalCapacity | UsedPct | State  | PathHash             |
-	+------------------+------------------+---------------+---------------+---------+--------+----------------------+
+	+------------------+------------------+---------------+---------------+---------+--------+
 	| /home/disk4/palo | 498.757 GB       | 3.033 TB      | 3.525 TB      | 13.94 % | ONLINE | 4883406271918338267  |
 	| /home/disk3/palo | 704.200 GB       | 2.832 TB      | 3.525 TB      | 19.65 % | ONLINE | -5467083960906519443 |
 	| /home/disk1/palo | 512.833 GB       | 3.007 TB      | 3.525 TB      | 14.69 % | ONLINE | -7733211489989964053 |
 	| /home/disk2/palo | 881.955 GB       | 2.656 TB      | 3.525 TB      | 24.65 % | ONLINE | 4870995507205544622  |
 	| /home/disk5/palo | 694.992 GB       | 2.842 TB      | 3.525 TB      | 19.36 % | ONLINE | 1916696897889786739  |
-	+------------------+------------------+---------------+---------------+---------+--------+----------------------+
+	+------------------+------------------+---------------+---------------+---------+--------+
 	 ```
 
 	The disk usage of each data path on the specified BE is shown here.
@@ -568,34 +547,60 @@ We have collected some statistics of Tablet Checker and Tablet Scheduler during 
 | num of balance scheduled                          | 0           |
 +---------------------------------------------------+-------------+
 ```
-
 The meanings of each line are as follows:
 
-* num of tablet check round: Tablet Checker 检查次数
-* cost of tablet check(ms): Tablet Checker 检查总耗时
-* num of tablet checked in tablet checker: Tablet Checker 检查过的 tablet 数量
-* num of unhealthy tablet checked in tablet checker: Tablet Checker 检查过的不健康的 tablet 数量
-* num of tablet being added to tablet scheduler: 被提交到 Tablet Scheduler 中的 tablet 数量
-* num of tablet schedule round: Tablet Scheduler 运行次数
-* cost of tablet schedule(ms): Tablet Scheduler 运行总耗时
-* num of tablet being scheduled: 被调度的 Tablet 总数量
-* num of tablet being scheduled succeeded: 被成功调度的 Tablet 总数量
-* num of tablet being scheduled failed: 调度失败的 Tablet 总数量
-* num of tablet being scheduled discard: 调度失败且被抛弃的 Tablet 总数量
-* num of tablet priority upgraded: 优先级上调次数
-* num of tablet priority downgraded: 优先级下调次数
-* num of clone task: number of clone tasks generated
-* num of clone task succeeded: clone 任务成功的数量
-* num of clone task failed: clone 任务失败的数量
-* num of clone task timeout: clone 任务超时的数量
-* num of replica missing error: the number of tablets whose status is checked is the missing copy
-* num of replica version missing error: 检查的状态为版本缺失的 tablet 的数量（该统计值包括了 num of replica relocating 和 num of replica missing in cluster error）
-*num of replica relocation *29366;* 24577;*replica relocation tablet *
-* num of replica redundant error: Number of tablets whose checked status is replica redundant
-* num of replica missing in cluster error: 检查的状态为不在对应 cluster 的 tablet 的数量
-* num of balance scheduled: 均衡调度的次数
+- num of tablet check round: Number of Tablet Checker inspections
 
-> Note: The above states are only historical accumulative values. We also print these statistics regularly in the FE logs, where the values in parentheses represent the number of changes in each statistical value since the last printing dependence of the statistical information.
+- cost of tablet check(ms): Total time consumed by Tablet Checker inspections (milliseconds)
+
+- num of tablet checked in tablet checker: Number of tablets checked by the Tablet Checker
+
+- num of unhealthy tablet checked in tablet checker: Number of unhealthy tablets checked by the Tablet Checker
+
+- num of tablet being added to tablet scheduler: Number of tablets submitted to the Tablet Scheduler
+
+- num of tablet schedule round: Number of Tablet Scheduler runs
+
+- cost of tablet schedule(ms): Total time consumed by Tablet Scheduler runs (milliseconds)
+
+- num of tablet being scheduled: Total number of tablets scheduled
+
+- num of tablet being scheduled succeeded: Total number of tablets successfully scheduled
+
+- num of tablet being scheduled failed: Total number of tablets that failed scheduling
+
+- num of tablet being scheduled discard: Total number of tablets discarded due to scheduling failures
+
+- num of tablet priority upgraded: Number of tablet priority upgrades
+
+- num of tablet priority downgraded: Number of tablet priority downgrades
+
+- num of clone task: Number of clone tasks generated
+
+- num of clone task succeeded: Number of successful clone tasks
+
+- num of clone task failed: Number of failed clone tasks
+
+- num of clone task timeout: Number of clone tasks that timed out
+
+- num of replica missing error: Number of tablets whose status is checked as missing replicas
+
+- num of replica version missing error: Number of tablets checked with missing version status (this statistic includes num of replica relocating and num of replica missing in cluster error)
+
+- num of replica relocation: Number of replica relocations
+
+- num of replica redundant error: Number of tablets whose checked status is replica redundant
+
+- num of replica missing in cluster error: Number of tablets checked with a status indicating they are missing from the corresponding cluster
+
+- num of balance scheduled: Number of balanced scheduling attempts
+
+:::info Note
+
+The above states are only historical accumulative values. We also print these statistics regularly in the FE logs, where the values in parentheses represent the number of changes in each statistical value since the last printing dependence of the statistical information.
+
+:::
+
 
 ## Relevant configuration instructions
 

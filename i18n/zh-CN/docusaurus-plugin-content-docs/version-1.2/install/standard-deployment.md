@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # 标准部署
 
 该文档主要介绍了部署 Doris 所需软硬件环境、建议的部署方式、集群扩容缩容，以及集群搭建到运行过程中的常见问题。  
@@ -110,17 +91,17 @@ Broker 是用于访问外部数据源（如 hdfs）的进程。通常，在每�
 
 Doris 各个实例直接通过网络进行通讯。以下表格展示了所有需要的端口
 
-| 实例名称 | 端口名称 | 默认端口 | 通讯方向 | 说明 |
-|---|---|---|---| ---|
-| BE | be_port | 9060 | FE --> BE | BE 上 thrift server 的端口，用于接收来自 FE 的请求 |
-| BE | webserver_port | 8040 | BE <--> BE | BE 上的 http server 的端口 |
-| BE | heartbeat\_service_port | 9050 | FE --> BE | BE 上心跳服务端口（thrift），用于接收来自 FE 的心跳 |
-| BE | brpc\_port | 8060 | FE <--> BE, BE <--> BE | BE 上的 brpc 端口，用于 BE 之间通讯 |
-| FE | http_port  | 8030 | FE <--> FE，用户 <--> FE |FE 上的 http server 端口 |
-| FE | rpc_port | 9020 | BE --> FE, FE <--> FE | FE 上的 thrift server 端口，每个fe的配置需要保持一致|
-| FE | query_port | 9030 | 用户 <--> FE | FE 上的 mysql server 端口 |
-| FE | edit\_log_port | 9010 | FE <--> FE | FE 上的 bdbje 之间通信用的端口 |
-| Broker | broker\_ipc_port | 8000 | FE --> Broker, BE --> Broker | Broker 上的 thrift server，用于接收请求 |
+| 实例名称    | 端口名称                  | 默认端口    | 通讯方向                      | 说明                                           |
+|------------|-------------------------|------------|------------------------------| ----------------------------------------------|
+| BE         | be_port                 | 9060       | FE --> BE                    | BE 上 thrift server 的端口，用于接收来自 FE 的请求 |
+| BE         | webserver_port          | 8040       | BE <--> BE, Client <--> FE   | BE 上的 http server 的端口                      |
+| BE         | heartbeat\_service_port | 9050       | FE --> BE                    | BE 上心跳服务端口（thrift），用于接收来自 FE 的心跳   |
+| BE         | brpc\_port              | 8060       | FE <--> BE, BE <--> BE       | BE 上的 brpc 端口，用于 BE 之间通讯               |
+| FE         | http_port               | 8030       | FE <--> FE，用户 <--> FE      |FE 上的 http server 端口                         |
+| FE         | rpc_port                | 9020       | BE --> FE, FE <--> FE        | FE 上的 thrift server 端口，每个fe的配置需要保持一致|
+| FE         | query_port              | 9030       | 用户 <--> FE                  | FE 上的 mysql server 端口                       |
+| FE         | edit\_log_port          | 9010       | FE <--> FE                   | FE 上的 bdbje 之间通信用的端口                    |
+| Broker     | broker\_ipc_port        | 8000       | FE --> Broker, BE --> Broker | Broker 上的 thrift server，用于接收请求           |
 
 > 注：
 > 1. 当部署多个 FE 实例时，要保证 FE 的 http\_port 配置相同。
@@ -225,11 +206,13 @@ doris默认为表名大小写敏感，如有表名大小写不敏感的需求需
 * 配置 JAVA_HOME 环境变量
 
   <version since="1.2.0"></version>  
+
   由于从 1.2 版本开始支持 Java UDF 函数，BE 依赖于 Java 环境。所以要预先配置 `JAVA_HOME` 环境变量，也可以在 `start_be.sh` 启动脚本第一行添加 `export JAVA_HOME=your_java_home_path` 来添加环境变量。
 
 * 安装 Java UDF 函数
 
    <version since="1.2.0">安装Java UDF 函数</version>  
+   
    因为从 1.2 版本开始支持 Java UDF 函数，需要从官网下载 Java UDF 函数的 JAR 包放到 BE 的 lib 目录下，否则可能会启动失败。
 
 * 在 FE 中添加所有 BE 节点
@@ -309,7 +292,7 @@ Broker 以插件的形式，独立于 Doris 部署。如果需要从第三方存
 
    BE 进程启动后，如果之前有数据，则可能有数分钟不等的数据索引加载时间。
 
-   如果是 BE 的第一次启动，或者该 BE 尚未加入任何集群，则 BE 日志会定期滚动 ```waiting to receive first heartbeat from frontend``` 字样。表示 BE 还未通过 FE 的心跳收到 Master 的地址，正在被动等待。这种错误日志，在 FE 中 ADD BACKEND 并发送心跳后，就会消失。如果在接到心跳后，又重复出现 ``````master client, get client from cache failed.host: , port: 0, code: 7`````` 字样，说明 FE 成功连接了 BE，但 BE 无法主动连接 FE。可能需要检查 BE 到 FE 的 rpc_port 的连通性。
+   如果是 BE 的第一次启动，或者该 BE 尚未加入任何集群，则 BE 日志会定期滚动 ```waiting to receive first heartbeat from frontend``` 字样。表示 BE 还未通过 FE 的心跳收到 Master 的地址，正在被动等待。这种错误日志，在 FE 中 ADD BACKEND 并发送心跳后，就会消失。如果在接到心跳后，又重复出现 ```master client, get client from cache failed.host: , port: 0, code: 7``` 字样，说明 FE 成功连接了 BE，但 BE 无法主动连接 FE。可能需要检查 BE 到 FE 的 rpc_port 的连通性。
 
    如果 BE 已经被加入集群，日志中应该每隔 5 秒滚动来自 FE 的心跳日志：```get heartbeat, host: xx.xx.xx.xx, port: 9020, cluster id: xxxxxx```，表示心跳正常。
 

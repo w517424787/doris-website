@@ -5,32 +5,13 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## CREATE-SQL-BLOCK-RULE
 
 ### Name
 
 CREATE SQL BLOCK RULE
 
-### Description
+## 描述
 
 该语句创建SQL阻止规则，该功能仅用于限制查询语句，不会限制explian语句的执行。
 
@@ -57,7 +38,7 @@ CREATE SQL_BLOCK_RULE rule_name
 - global：是否全局(所有用户)生效，默认为false
 - enable：是否开启阻止规则，默认为true
 
-### Example
+## 举例
 
 1. 创建一个名称为 test_rule 的阻止规则
 

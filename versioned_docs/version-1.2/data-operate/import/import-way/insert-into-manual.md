@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Insert Into
 
 The use of Insert Into statements is similar to that of Insert Into statements in databases such as MySQL. But in Doris, all data writing is a separate import job. So Insert Into is also introduced here as an import method.
@@ -189,7 +170,7 @@ This command returns the insert results and the details of the corresponding tra
 
   At present, Insert Into does not support custom import timeout time. All Insert Into imports have a uniform timeout time. The default timeout time is 1 hour. If the imported source file cannot complete the import within the specified time, the parameter `insert_load_default_timeout_second` of FE needs to be adjusted.
 
-  <version since="dev"></version>
+   
   At the same time, the Insert Into statement receives the restriction of the Session variable `insert_timeout`. You can increase the timeout time by `SET insert_timeout = xxx;` in seconds.
 
 ### Session Variables
@@ -200,7 +181,7 @@ This command returns the insert results and the details of the corresponding tra
 
 - query_timeout
 
-  Insert Into itself is also an SQL command, and the Insert Into statement is restricted by the Session variable <version since="dev" type="inline">`insert_timeout`</version>. You can increase the timeout time by `SET insert_timeout = xxx;` in seconds.
+  Insert Into itself is also an SQL command, and the Insert Into statement is restricted by the Session variable  `insert_timeout`. You can increase the timeout time by `SET insert_timeout = xxx;` in seconds.
 
 ## Best Practices
 
@@ -245,7 +226,7 @@ Cluster situation: The average import speed of current user cluster is about 5M/
 
 - Step2: Create Import Tasks
 
-  Since users want to ETL data from a table and import it into the target table, they should use the Insert in query\stmt mode to import it.
+  Since users want to ETL data from a table and import it into the target table, they should use the Insert in query\_stmt mode to import it.
 
   ```text
   INSERT INTO bj_store_sales SELECT id, total, user_id, sale_timestamp FROM store_sales where region = "bj";

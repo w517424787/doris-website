@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Synchronize data using Insert method
 
 Users can use INSERT statement to import data through MySQL protocol.
@@ -33,7 +14,7 @@ The INSERT statement is used in a similar way to the INSERT statement used in da
 ```sql
 * INSERT INTO table SELECT ...
 * INSERT INTO table VALUES(...)
-````
+```
 
 Here we only introduce the second way. For a detailed description of the INSERT command, see the [INSERT](../../../sql-manual/sql-reference/Data-Manipulation-Statements/Manipulation/INSERT.md) command documentation.
 
@@ -43,7 +24,7 @@ Single write means that the user directly executes an INSERT command. An example
 
 ```sql
 INSERT INTO example_tbl (col1, col2, col3) VALUES (1000, "test", 3.25);
-````
+```
 
 For Doris, an INSERT command is a complete import transaction.
 
@@ -58,7 +39,7 @@ INSERT INTO example_tbl VALUES
 (1000, "baidu1", 3.25)
 (2000, "baidu2", 4.25)
 (3000, "baidu3", 5.25);
-````
+```
 
 We recommend that the number of inserts in a batch be as large as possible, such as thousands or even 10,000 at a time. Or you can use PreparedStatement to perform batch inserts through the following procedure.
 
@@ -66,7 +47,7 @@ We recommend that the number of inserts in a batch be as large as possible, such
 
 Here we give a simple JDBC batch INSERT code example:
 
-````java
+```java
 package demo.doris;
 
 import java.sql.Connection;
@@ -131,7 +112,7 @@ public class DorisJDBCDemo {
         }
     }
 }
-````
+```
 
 Please note the following:
 
@@ -146,7 +127,7 @@ Please note the following:
    (1000, "baidu1", 3.25)
    (2000, "baidu2", 4.25)
    (3000, "baidu3", 5.25);
-   ````
+   ```
 
 2. Batch size
 

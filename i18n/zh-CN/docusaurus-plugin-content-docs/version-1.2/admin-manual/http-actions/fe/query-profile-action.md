@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Query Profile Action
 
 ## Request
@@ -50,7 +31,7 @@ under the License.
 
 `GET /rest/v2/manager/query/query_info`
 
-### Description
+## 描述
 
 可获取集群所有 fe 节点 select 查询信息。
 
@@ -104,7 +85,7 @@ Admin 和 Root 用户可以查看所有 Query。普通用户仅能查看自己�
 
 </version>
 
-### Examples
+## 举例s
 ```
 GET /rest/v2/manager/query/query_info
 
@@ -147,7 +128,7 @@ GET /rest/v2/manager/query/query_info
 
 `GET /rest/v2/manager/query/trace_id/{trace_id}`
 
-### Description
+## 描述
 
 通过 Trace Id 获取 Query Id.
 
@@ -197,7 +178,7 @@ Admin 和 Root 用户可以查看所有 Query。普通用户仅能查看自己�
 
 `GET /rest/v2/manager/query/profile/text/{query_id}`
 
-### Description
+## 描述
 
 用于获取指定query id的sql和profile文本。
     
@@ -252,7 +233,7 @@ Admin 和 Root 用户可以查看所有 Query。普通用户仅能查看自己�
 
 </version>
     
-### Examples
+## 举例s
 
 1. 获取 sql：
 
@@ -274,7 +255,7 @@ Admin 和 Root 用户可以查看所有 Query。普通用户仅能查看自己�
 
 `GET /rest/v2/manager/query/profile/fragments/{query_id}`
 
-### Description
+## 描述
 
 用于获取指定query id的fragment名称，instance id和执行时长。
     
@@ -324,7 +305,7 @@ Admin 和 Root 用户可以查看所有 Query。普通用户仅能查看自己�
 
 </version>
     
-### Examples
+## 举例s
 
     ```
     GET /rest/v2/manager/query/profile/fragments/d7c93d9275334c35-9e6ac5f295a7134b
@@ -364,7 +345,7 @@ Admin 和 Root 用户可以查看所有 Query。普通用户仅能查看自己�
 
 `GET /rest/v2/manager/query/profile/graph/{query_id}`
 
-### Description
+## 描述
 
 获取指定query id树状profile信息，同 `show query profile` 指令。
     
@@ -418,7 +399,7 @@ Admin 和 Root 用户可以查看所有 Query。普通用户仅能查看自己�
 
 `GET /rest/v2/manager/query/current_queries`
 
-### Description
+## 描述
 
 同 `show proc "/current_query_stmts"`，返回当前正在执行的 query
     
@@ -451,7 +432,7 @@ Admin 和 Root 用户可以查看所有 Query。普通用户仅能查看自己�
 
 `POST /rest/v2/manager/query/kill/{query_id}`
 
-### Description
+## 描述
 
 取消执行连接中正在执行的 query
     

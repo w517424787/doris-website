@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## CREATE-SQL-BLOCK-RULE
 
 ### Name
@@ -45,7 +26,7 @@ grammar:
 ```sql
 CREATE SQL_BLOCK_RULE rule_name
 [PROPERTIES ("key"="value", ...)];
-````
+```
 
 Parameter Description:
 
@@ -68,7 +49,7 @@ Parameter Description:
     "global"="false",
     "enable"="true"
     );
-    ````
+    ```
 
     >Notes:
     >
@@ -79,7 +60,7 @@ Parameter Description:
     ```sql
     select * from order_analysis;
     ERROR 1064 (HY000): errCode = 2, detailMessage = sql match regex sql block rule: order_analysis_rule
-    ````
+    ```
 
 
 2. Create test_rule2, limit the maximum number of scanned partitions to 30, and limit the maximum scan base to 10 billion rows. The example is as follows:
@@ -92,7 +73,7 @@ Parameter Description:
     "global" = "false",
     "enable" = "true"
     );
-   ````
+   ```
 3. Create SQL BLOCK RULE with special chars
 
     ```sql
@@ -110,9 +91,9 @@ Parameter Description:
 
 ### Keywords
 
-````text
+```text
 CREATE, SQL_BLCOK_RULE
-````
+```
 
 ### Best Practice
 

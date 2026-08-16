@@ -5,32 +5,13 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## ALTER-TABLE-COLUMN
 
 ### Name
 
 ALTER TABLE COLUMN
 
-### Description
+## 描述
 
 该语句用于对已有 table 进行 Schema change 操作。schema change 是异步的，任务提交成功则返回，之后可使用[SHOW ALTER TABLE COLUMN](../../Show-Statements/SHOW-ALTER.md) 命令查看进度。
 
@@ -133,7 +114,7 @@ ORDER BY (column_name1, column_name2, ...)
 - index 中的所有列都要写出来
 - value 列在 key 列之后
 
-### Example
+## 举例
 
 1. 向 example_rollup_index 的 col1 后添加一个key列 new_col(非聚合模型)
 

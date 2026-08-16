@@ -5,26 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
-
 # Import Analysis
 
 Doris provides a graphical command to help users analyze a specific import more easily. This article describes how to use this feature.
@@ -38,14 +18,14 @@ If you don't know much about Doris' query plan tree, please read the previous ar
 The execution process of a [Broker Load](../../data-operate/import/import-way/broker-load-manual.md) request is also based on Doris' query framework. A Broker Load job will be split into multiple subtasks based on the number of DATA INFILE clauses in the import request. Each subtask can be regarded as an independent import execution plan. An import plan consists of only one Fragment, which is composed as follows:
 
 ```sql
-┌────────────────┐
+┌-------------┐
 │OlapTableSink│
-└────────────────┘
+└-------------┘
         │
-┌────────────────┐
+┌--------------┐
 │BrokerScanNode│
-└────────────────┘
-````
+└--------------┘
+```
 
 BrokerScanNode is mainly responsible for reading the source data and sending it to OlapTableSink, and OlapTableSink is responsible for sending data to the corresponding node according to the partition and bucketing rules, and the corresponding node is responsible for the actual data writing.
 
@@ -59,7 +39,7 @@ The user can open the session variable `is_report_success` with the following co
 
 ```sql
 SET is_report_success=true;
-````
+```
 
 Then submit a Broker Load import request and wait until the import execution completes. Doris will generate a Profile for this import. Profile contains the execution details of importing each subtask and Instance, which helps us analyze import bottlenecks.
 
@@ -105,7 +85,7 @@ WaitAndFetchResultTime: NULL
        FetchResultTime: 0ns
        WriteResultTime: 0ns
 WaitAndFetchResultTime: N/A
-````
+```
 
 This command will list all currently saved import profiles. Each line corresponds to one import. where the QueryId column is the ID of the import job. This ID can also be viewed through the SHOW LOAD statement. We can select the QueryId corresponding to the Profile we want to see to see the specific situation.
 
@@ -124,7 +104,7 @@ This command will list all currently saved import profiles. Each line correspond
    +-----------------------------------+------------+
    | 980014623046410a-af5d36f23381017f | 3m14s      |
    +-----------------------------------+------------+
-   ````
+   ```
 
 As shown in the figure above, it means that the import job `980014623046410a-af5d36f23381017f` has a total of one subtask, in which ActiveTime indicates the execution time of the longest instance in this subtask.
 
@@ -144,7 +124,7 @@ As shown in the figure above, it means that the import job `980014623046410a-af5
    | 980014623046410a-88e260f0c43031f4 | 10.81.85.89:9067 | 3m10s      |
    | 980014623046410a-88e260f0c43031f5 | 10.81.85.89:9067 | 3m14s      |
    +-----------------------------------+------------------+------------+
-   ````
+   ```
 
 This shows the time-consuming of four instances of the subtask 980014623046410a-af5d36f23381017f, and also shows the execution node where the instance is located.
 
@@ -159,43 +139,43 @@ This shows the time-consuming of four instances of the subtask 980014623046410a-
    **************************** 1. row ******************** ******
    Instance:
          ┌-----------------------------------------┐
-         │[-1: OlapTableSink] │
-         │(Active: 2m17s, non-child: 70.91) │
-         │ - Counters: │
-         │ - CloseWaitTime: 1m53s │
-         │ - ConvertBatchTime: 0ns │
-         │ - MaxAddBatchExecTime: 1m46s │
-         │ - NonBlockingSendTime: 3m11s │
-         │ - NumberBatchAdded: 782 │
-         │ - NumberNodeChannels: 1 │
-         │ - OpenTime: 743.822us │
-         │ - RowsFiltered: 0 │
-         │ - RowsRead: 1.599729M (1599729) │
-         │ - RowsReturned: 1.599729M (1599729)│
-         │ - SendDataTime: 11s761ms │
-         │ - TotalAddBatchExecTime: 1m46s │
-         │ - ValidateDataTime: 9s802ms │
+         │[-1: OlapTableSink]                      │
+         │(Active: 2m17s, non-child: 70.91)        │
+         │ - Counters:                             │
+         │ - CloseWaitTime: 1m53s                  │
+         │ - ConvertBatchTime: 0ns                 │
+         │ - MaxAddBatchExecTime: 1m46s            │
+         │ - NonBlockingSendTime: 3m11s            │
+         │ - NumberBatchAdded: 782                 │
+         │ - NumberNodeChannels: 1                 │
+         │ - OpenTime: 743.822us                   │
+         │ - RowsFiltered: 0                       │
+         │ - RowsRead: 1.599729M (1599729)         │
+         │ - RowsReturned: 1.599729M (1599729)     │
+         │ - SendDataTime: 11s761ms                │
+         │ - TotalAddBatchExecTime: 1m46s          │
+         │ - ValidateDataTime: 9s802ms             │
          └-----------------------------------------┘
                               │
-   ┌------------------------------------------------- ----┐
-   │[0: BROKER_SCAN_NODE] │
-   │(Active: 56s537ms, non-child: 29.06) │
-   │ - Counters: │
-   │ - BytesDecompressed: 0.00 │
-   │ - BytesRead: 5.77 GB │
-   │ - DecompressTime: 0ns │
-   │ - FileReadTime: 34s263ms │
-   │ - MaterializeTupleTime(*): 45s54ms │
-   │ - NumDiskAccess: 0 │
-   │ - PeakMemoryUsage: 33.03 MB │
-   │ - RowsRead: 1.599729M (1599729) │
-   │ - RowsReturned: 1.599729M (1599729) │
-   │ - RowsReturnedRate: 28.295K /sec │
-   │ - TotalRawReadTime(*): 1m20s │
-   │ - TotalReadThroughput: 30.39858627319336 MB/sec│
-   │ - WaitScannerTime: 56s528ms │
-   └------------------------------------------------- ----┘
-   ````
+   ┌------------------------------------------------------┐
+   │[0: BROKER_SCAN_NODE]                                 │
+   │(Active: 56s537ms, non-child: 29.06)                  │
+   │ - Counters:                                          │
+   │ - BytesDecompressed: 0.00                            │
+   │ - BytesRead: 5.77 GB                                 │
+   │ - DecompressTime: 0ns                                │
+   │ - FileReadTime: 34s263ms                             │
+   │ - MaterializeTupleTime(*): 45s54ms                   │
+   │ - NumDiskAccess: 0                                   │
+   │ - PeakMemoryUsage: 33.03 MB                          │
+   │ - RowsRead: 1.599729M (1599729)                      │
+   │ - RowsReturned: 1.599729M (1599729)                  │
+   │ - RowsReturnedRate: 28.295K /sec                     │
+   │ - TotalRawReadTime(*): 1m20s                         │
+   │ - TotalReadThroughput: 30.39858627319336 MB/sec      │
+   │ - WaitScannerTime: 56s528ms                          │
+   └------------------------------------------------------┘
+   ```
 
 The figure above shows the specific profiles of each operator of Instance 980014623046410a-af5d36f23381017f in subtask 980014623046410a-88e260f0c43031f5.
 

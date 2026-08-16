@@ -5,48 +5,32 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Hive
 
 通过连接 Hive Metastore，或者兼容 Hive Metatore 的元数据服务，Doris 可以自动获取 Hive 的库表信息，并进行数据查询。
 
 除了 Hive 外，很多其他系统也会使用 Hive Metastore 存储元数据。所以通过 Hive Catalog，我们不仅能访问 Hive，也能访问使用 Hive Metastore 作为元数据存储的系统。如 Iceberg、Hudi 等。
 
-## 使用限制
+## 使用须知
 
-1. hive 支持 1/2/3 版本。
-2. 支持 Managed Table 和 External Table。
-3. 可以识别 Hive Metastore 中存储的 hive、iceberg、hudi 元数据。
-4. 支持数据存储在 Juicefs 上的 hive 表，用法如下（需要把juicefs-hadoop-x.x.x.jar放在 fe/lib/ 和 apache_hdfs_broker/lib/ 下）。
-5. 支持数据存储在 CHDFS 上的 hive 表。需配置环境：
+1. 将 core-site.xml，hdfs-site.xml 和 hive-site.xml  放到 FE 和 BE 的 conf 目录下。优先读取 conf 目录下的 hadoop 配置文件，再读取环境变量 `HADOOP_CONF_DIR` 的相关配置文件。 
+2. hive 支持 1/2/3 版本。
+3. 支持 Managed Table 和 External Table。
+4. 可以识别 Hive Metastore 中存储的 hive、iceberg、hudi 元数据。
+5. 支持数据存储在 Juicefs 上的 hive 表，用法如下（需要把juicefs-hadoop-x.x.x.jar放在 fe/lib/ 和 apache_hdfs_broker/lib/ 下）。
+6. 支持数据存储在 CHDFS 上的 hive 表。需配置环境：
    1. 把chdfs_hadoop_plugin_network-x.x.jar 放在 fe/lib/ 和 apache_hdfs_broker/lib/ 下
    2. 将 hive 所在 Hadoop 集群的 core-site.xml 和 hdfs-site.xml 复制到 fe/conf/ 和 apache_hdfs_broker/conf 目录下
 
 <version since="dev">
 
-6. 支持数据存在在 GooseFS(GFS) 上的 hive、iceberg表。需配置环境：
+7. 支持数据存在在 GooseFS(GFS) 上的 hive、iceberg表。需配置环境：
    1. 把 goosefs-x.x.x-client.jar 放在 fe/lib/ 和 apache_hdfs_broker/lib/ 下
    2. 创建 catalog 时增加属性：'fs.AbstractFileSystem.gfs.impl' = 'com.qcloud.cos.goosefs.hadoop.GooseFileSystem'， 'fs.gfs.impl' = 'com.qcloud.cos.goosefs.hadoop.FileSystem'
    
 </version>
+
+8. 如果 Hadoop 节点配置了 hostname，请确保添加对应的映射关系到 /etc/hosts 文件。
 
 ## 创建 Catalog
 
@@ -162,7 +146,7 @@ CREATE CATALOG hive WITH RESOURCE hms_resource PROPERTIES(
 	'key' = 'value'
 );
 ```
-<version since="dev"></version>
+ 
 
 创建 Catalog 时可以采用参数 `file.meta.cache.ttl-second` 来设置 File Cache 自动失效时间，也可以将该值设置为 0 来禁用 File Cache。时间单位为：秒。示例如下：
 
@@ -201,24 +185,24 @@ CREATE CATALOG hive PROPERTIES (
 
 适用于 Hive/Iceberge/Hudi
 
-| HMS Type | Doris Type | Comment |
-|---|---|---|
-| boolean| boolean | |
-| tinyint|tinyint | |
-| smallint| smallint| |
-| int| int | |
-| bigint| bigint | |
-| date| date| |
-| timestamp| datetime| |
-| float| float| |
-| double| double| |
-| char| char | |
-| varchar| varchar| |
-| decimal| decimal | |
-| `array<type>` | `array<type>`| 支持array嵌套，如 `array<array<int>>` |
-| `map<KeyType, ValueType>` | `map<KeyType, ValueType>` | 暂不支持嵌套，KeyType 和 ValueType 需要为基础类型 |
-| `struct<col1: Type1, col2: Type2, ...>` | `struct<col1: Type1, col2: Type2, ...>` | 暂不支持嵌套，Type1, Type2, ... 需要为基础类型 |
-| other | unsupported | |
+| HMS Type                                | Doris Type                              | Comment                                      |
+|-----------------------------------------|-----------------------------------------|----------------------------------------------|
+| boolean                                 | boolean                                 |                                              |
+| tinyint                                 | tinyint                                 |                                              |
+| smallint                                | smallint                                |                                              |
+| int                                     | int                                     |                                              |
+| bigint                                  | bigint                                  |                                              |
+| date                                    | date                                    |                                              |
+| timestamp                               | datetime                                |                                              |
+| float                                   | float                                   |                                              |
+| double                                  | double                                  |                                              |
+| char                                    | char                                    |                                              |
+| varchar                                 | varchar                                 |                                              |
+| decimal                                 | decimal                                 |                                              |
+| `array<type>`                           | `array<type>`                           | 支持array嵌套，如 `array<array<int>>`          |
+| `map<KeyType, ValueType>`               | `map<KeyType, ValueType>`               | 暂不支持嵌套，KeyType 和 ValueType 需要为基础类型 |
+| `struct<col1: Type1, col2: Type2, ...>` | `struct<col1: Type1, col2: Type2, ...>` | 暂不支持嵌套，Type1, Type2, ... 需要为基础类型    |
+| other                                   | unsupported                             |                                              |
 
 ## 使用Ranger进行权限校验
 

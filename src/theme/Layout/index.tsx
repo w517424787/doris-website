@@ -1,42 +1,73 @@
-import React from 'react';
+import React, { useEffect, JSX } from 'react';
+import { useHistory, useLocation } from '@docusaurus/router';
 import clsx from 'clsx';
 import ErrorBoundary from '@docusaurus/ErrorBoundary';
-import { PageMetadata, ThemeClassNames } from '@docusaurus/theme-common';
+import { PageMetadata, SkipToContentFallbackId, ThemeClassNames } from '@docusaurus/theme-common';
 import { useKeyboardNavigation } from '@docusaurus/theme-common/internal';
 import SkipToContent from '@theme/SkipToContent';
-import Layout from '@theme-original/Layout';
+import Footer from '@theme/Footer';
+import LayoutProvider from '@theme/Layout/Provider';
 import ErrorPageContent from '@theme/ErrorPageContent';
-import useScrollTop from '@site/src/hooks/scroll-top-hooks';
-import './styles.scss';
-import AnnouncementBar from '../AnnouncementBar';
-// import Navbar from '@theme/Navbar';
-// import Footer from '../Footer';
-export default function CustomLayout(props) {
+import type { Props } from '@theme/Layout';
+import styles from './styles.module.css';
+import { NavbarNext } from '@site/src/components/home-next/NavbarNext';
+
+export default function Layout(props: Props): JSX.Element {
     const {
         children,
         noFooter,
         wrapperClassName,
-        // Not really layout-related, but kept for convenience/retro-compatibility
         title,
         description,
-        isPage,
-        showAnnouncementBar,
     } = props;
+    const history = useHistory();
+    const { hash } = useLocation();
     useKeyboardNavigation();
-    const { isTop } = useScrollTop(80);
+
+    useEffect(() => {
+        if (
+            history.location.pathname?.length > 1 &&
+            history.location.pathname[history.location.pathname.length - 1] === '/'
+        ) {
+            const params = location.href.split(history.location.pathname)[1];
+            history.replace(history.location.pathname.slice(0, -1) + params);
+        }
+    }, [history.location]);
+
+    useEffect(() => {
+        window.scroll(0, 0);
+        document.body.style.overflow = 'auto';
+    }, [history.location.pathname]);
+
+    useEffect(() => {
+        if (hash) {
+            try {
+                const decodeHash = decodeURIComponent(hash);
+                const targetElement = document.querySelector(decodeHash);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    }, [hash]);
 
     return (
-        <Layout>
+        <LayoutProvider>
             <PageMetadata title={title} description={description} />
 
             <SkipToContent />
+            <NavbarNext />
 
-            {/* {showAnnouncementBar && <AnnouncementBar />} */}
-            {/* <Navbar /> */}
-            <div className={clsx(ThemeClassNames.wrapper.main, wrapperClassName, isPage ? 'has-margin' : '')}>
+            <div
+                id={SkipToContentFallbackId}
+                className={clsx(ThemeClassNames.wrapper.main, styles.mainWrapper, wrapperClassName)}
+            >
                 <ErrorBoundary fallback={params => <ErrorPageContent {...params} />}>{children}</ErrorBoundary>
             </div>
-            {/* {!noFooter && <Footer />} */}
-        </Layout>
+
+            {!noFooter && <Footer />}
+        </LayoutProvider>
     );
 }

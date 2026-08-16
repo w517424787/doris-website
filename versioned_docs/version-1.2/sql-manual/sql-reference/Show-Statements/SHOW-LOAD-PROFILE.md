@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## SHOW-LOAD-PROFILE
 
 ### Name
@@ -36,13 +17,13 @@ This statement is used to view the Profile information of the import operation. 
 
 ```sql
 SET is_report_success=true;
-````
+```
 
 Versions 0.15 and later perform the following settings:
 
 ```sql
 SET [GLOBAL] enable_profile=true;
-````
+```
 
 grammar:
 
@@ -56,7 +37,7 @@ show load profile "/[queryId]/[TaskId]"
 show load profile "/[queryId]/[TaskId]/[FragmentId]/"
 
 show load profile "/[queryId]/[TaskId]/[FragmentId]/[InstanceId]"
-````
+```
 
 This command will list all currently saved import profiles. Each line corresponds to one import. where the QueryId column is the ID of the import job. This ID can also be viewed through the SHOW LOAD statement. We can select the QueryId corresponding to the Profile we want to see to see the specific situation
 
@@ -66,7 +47,7 @@ This command will list all currently saved import profiles. Each line correspond
 
    ```sql
    mysql> show load profile "/"\G
-*************************** 1. row ***************************
+   *************************** 1. row ***************************
                  JobId: 20010
                QueryId: 980014623046410a-af5d36f23381017f
                   User: root
@@ -83,8 +64,8 @@ This command will list all currently saved import profiles. Each line correspond
           ScheduleTime: NULL
        FetchResultTime: NULL
        WriteResultTime: NULL
-WaitAndFetchResultTime: NULL
-*************************** 2. row ***************************
+   WaitAndFetchResultTime: NULL
+   *************************** 2. row ***************************
                  JobId: N/A
                QueryId: 7cc2d0282a7a4391-8dd75030185134d8
                   User: root
@@ -101,8 +82,8 @@ WaitAndFetchResultTime: NULL
           ScheduleTime: N/A
        FetchResultTime: 0ns
        WriteResultTime: 0ns
-WaitAndFetchResultTime: N/A
-   ````
+   WaitAndFetchResultTime: N/A
+   ```
 
 2. View an overview of the subtasks with imported jobs:
 
@@ -113,7 +94,7 @@ WaitAndFetchResultTime: N/A
    +-----------------------------------+------------+
    | 980014623046410a-af5d36f23381017f | 3m14s      |
    +-----------------------------------+------------+
-   ````
+   ```
    
 3. View the plan tree of the specified subtask
 
@@ -157,7 +138,7 @@ WaitAndFetchResultTime: N/A
                                     │Fragment: 1      │ │Fragment: 1  │
                                     └─────────────────┘ └─────────────┘
 
-   ```sql
+   ```
 
    This will show the plan tree and fragment id on it
 
@@ -173,7 +154,7 @@ WaitAndFetchResultTime: N/A
    | 980014623046410a-88e260f0c43031f4 | 10.81.85.89:9067 | 3m10s      |
    | 980014623046410a-88e260f0c43031f5 | 10.81.85.89:9067 | 3m14s      |
    +-----------------------------------+------------------+------------+
-   ````
+   ```
 
 4. Continue to view the detailed Profile of each operator on a specific Instance
 
@@ -221,11 +202,9 @@ WaitAndFetchResultTime: N/A
    │      - TotalReadThroughput: 30.39858627319336 MB/sec│
    │      - WaitScannerTime: 56s528ms                    │
    └-----------------------------------------------------┘
-   ````
+   ```
 
 ### Keywords
 
     SHOW, LOAD, PROFILE
-
-### Best Practice
 

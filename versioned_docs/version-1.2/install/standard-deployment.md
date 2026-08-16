@@ -5,31 +5,11 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
-
 # Installation and Deployment
 
 This topic is about the hardware and software environment needed to deploy Doris, the recommended deployment mode, cluster scaling, and common problems occur in creating and running clusters.
 
-Before continue reading, you might want to compile Doris following the instructions in the [Compile](https://doris.apache.org/docs/dev/install/source-install/compilation-general/) topic.
+Before continue reading, you might want to compile Doris following the instructions in the [General Compile](../install/source-install/compilation-general.md) topic.
 
 ## Software and Hardware Requirements
 
@@ -55,11 +35,11 @@ Doris, as an open source OLAP database with an MPP architecture, can run on most
 
 **Set the maximum number of open file descriptors in the system**
 
-````
+```
 vi /etc/security/limits.conf
 * soft nofile 65536
 * hard nofile 65536
-````
+```
 
 ##### Clock synchronization
 
@@ -114,17 +94,17 @@ Broker is a process for accessing external data sources, such as hdfs. Usually, 
 
 Doris instances communicate directly over the network. The following table shows all required ports.
 
-| Instance Name | Port Name | Default Port | Communication Direction | Description|
-| ---|---|---|---|---|
-| BE | be_port | 9060 | FE --> BE | Thrift server port on BE for receiving requests from FE |
-| BE | webserver\_port | 8040 | BE <--> BE | HTTP server port on BE |
-| BE | heartbeat\_service_port | 9050 | FE --> BE | Heart beat service port (thrift) on BE, used to receive heartbeat from FE |
-| BE | brpc\_port | 8060 | FE <--> BE, BE <--> BE | BRPC port on BE for communication between BEs |
-| FE | http_port | 8030 | FE <--> FE, user <--> FE | HTTP server port on FE |
-| FE | rpc_port | 9020 | BE --> FE, FE <--> FE | Thrift server port on FE; The configurations of each FE should be consistent. |
-| FE | query_port | 9030 | user <--> FE | MySQL server port on FE |
-| FE | edit\_log_port | 9010 | FE <--> FE | Port on FE for BDBJE communication |
-| Broker | broker ipc_port | 8000 | FE --> Broker, BE --> Broker | Thrift server port on Broker for receiving requests |
+| Instance Name | Port Name 			  | Default Port | Communication Direction 		| Description																	|
+| --------------|-------------------------|--------------|------------------------------|-------------------------------------------------------------------------------|
+| BE 			| be_port 			      | 9060 		 | FE --> BE		 	   		| Thrift server port on BE for receiving requests from FE 						|
+| BE 			| webserver\_port 		  | 8040 		 | BE <--> BE 					| HTTP server port on BE 														|
+| BE 			| heartbeat\_service_port | 9050 		 | FE --> BE 					| Heart beat service port (thrift) on BE, used to receive heartbeat from FE 	|
+| BE 			| brpc\_port 			  | 8060 		 | FE <--> BE, BE <--> BE 		| BRPC port on BE for communication between BEs 								|
+| FE 			| http_port 			  | 8030 		 | FE <--> FE, user <--> FE 	| HTTP server port on FE 														|
+| FE 			| rpc_port 				  | 9020 		 | BE --> FE, FE <--> FE 		| Thrift server port on FE; The configurations of each FE should be consistent. |
+| FE 			| query_port 			  | 9030 		 | user <--> FE 				| MySQL server port on FE 														|
+| FE 			| edit\_log_port 		  | 9010 		 | FE <--> FE 					| Port on FE for BDBJE communication 											|
+| Broker 		| broker ipc_port		  | 8000 		 | FE --> Broker, BE --> Broker | Thrift server port on Broker for receiving requests 							|
 
 > Note:
 > 
@@ -231,11 +211,13 @@ See the `lower_case_table_names` section in [Variables](../advanced/variables.md
 * Set JAVA_HOME environment variable
 
   <version since="1.2.0"></version>  
+
   Java UDF is supported since version 1.2, so BEs are dependent on the Java environment. It is necessary to set the `JAVA_HOME` environment variable before starting. You can also do this by adding `export JAVA_HOME=your_java_home_path` to the first line of the `start_be.sh` startup script.
 
 * Install Java UDF
 
   <version since="1.2.0"></version>
+  
   Because Java UDF is supported since version 1.2, you need to download the JAR package of Java UDF from the official website and put them under the lib directory of BE, otherwise it may fail to start.
 	
 * Add all BE nodes to FE
@@ -316,7 +298,7 @@ Broker is deployed as a plug-in, which is independent of Doris. If you need to i
 
 	After the BE process starts, if there have been data there before, it might need several minutes for data index loading.
 
-	If BE is started for the first time or the BE has not joined any cluster, the BE log will periodically scroll the words `waiting to receive first heartbeat from frontend`, meaning that BE has not received the Master's address through FE's heartbeat and is waiting passively. Such error log will disappear after sending the heartbeat by ADD BACKEND in FE. If the word `````master client', get client from cache failed. host:, port: 0, code: 7````` appears after receiving the heartbeat, it indicates that FE has successfully connected BE, but BE cannot actively connect FE. You may  need to check the connectivity of rpc_port from BE to FE.
+	If BE is started for the first time or the BE has not joined any cluster, the BE log will periodically scroll the words `waiting to receive first heartbeat from frontend`, meaning that BE has not received the Master's address through FE's heartbeat and is waiting passively. Such error log will disappear after sending the heartbeat by ADD BACKEND in FE. If the word ```master client', get client from cache failed. host:, port: 0, code: 7``` appears after receiving the heartbeat, it indicates that FE has successfully connected BE, but BE cannot actively connect FE. You may  need to check the connectivity of rpc_port from BE to FE.
 
 	If BE has been added to the cluster, the heartbeat log from FE will be scrolled every five seconds: ```get heartbeat, host:xx. xx.xx.xx, port:9020, cluster id:xxxxxxx```, indicating that the heartbeat is normal.
 

@@ -5,30 +5,11 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## HLL 近似去重
 
 在实际的业务场景中，随着业务数据量越来越大，对数据去重的压力也越来越大，当数据达到一定规模之后，使用精准去重的成本也越来越高，在业务可以接受的情况下，通过近似算法来实现快速去重降低计算压力是一个非常好的方式，本文主要介绍 Doris 提供的 HyperLogLog（简称 HLL）是一种近似去重算法。
 
-HLL 的特点是具有非常优异的空间复杂度 O(mloglogn) , 时间复杂度为 O(n),  并且计算结果的误差可控制在 1%—2% 左右，误差与数据集大小以及所采用的哈希函数有关。
+HLL 的特点是具有非常优异的空间复杂度 O(mloglogn)，时间复杂度为 O(n)，并且计算结果的误差可控制在 1%—2% 左右，误差与数据集大小以及所采用的哈希函数有关。
 
 ## 什么是 HyperLogLog
 
@@ -172,7 +153,7 @@ HLL 列不允许直接查询原始值，只能通过 HLL 的聚合函数进行�
 
 1. 求总的PV
 
-   ```sql
+```sql
    mysql> select HLL_UNION_AGG(pv) from test_hll;
    +---------------------+
    | hll_union_agg(`pv`) |
@@ -180,11 +161,11 @@ HLL 列不允许直接查询原始值，只能通过 HLL 的聚合函数进行�
    |                   4 |
    +---------------------+
    1 row in set (0.00 sec)
-   ```
+```
 
    等价于：
 
-   ```sql
+```sql
    mysql> SELECT COUNT(DISTINCT pv) FROM test_hll;
    +----------------------+
    | count(DISTINCT `pv`) |
@@ -192,11 +173,11 @@ HLL 列不允许直接查询原始值，只能通过 HLL 的聚合函数进行�
    |                    4 |
    +----------------------+
    1 row in set (0.01 sec)
-   ```
+```
 
 2. 求每一天的PV
 
-   ```sql
+```sql
    mysql> select HLL_UNION_AGG(pv) from test_hll group by dt;
    +---------------------+
    | hll_union_agg(`pv`) |
@@ -205,4 +186,4 @@ HLL 列不允许直接查询原始值，只能通过 HLL 的聚合函数进行�
    |                   4 |
    +---------------------+
    2 rows in set (0.01 sec)
-   ```
+```

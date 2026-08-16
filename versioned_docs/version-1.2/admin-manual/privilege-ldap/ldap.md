@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # LDAP
 
 Access to third-party LDAP services to provide authentication login and group authorization services for Doris.
@@ -82,7 +63,7 @@ Client-side LDAP authentication requires the mysql client-side explicit authenti
 
 * Set the environment variable LIBMYSQL_ENABLE_CLEARTEXT_PLUGIN to value 1.
   For example, in a linux or max environment you can use the command:
-  ```bash
+  ```shell
   echo "export LIBMYSQL_ENABLE_CLEARTEXT_PLUGIN=1" >> ～/.bash_profile && source ～/.bash_profile
   ```
 
@@ -118,12 +99,12 @@ For example:
 Doris account exists: jack@'172.10.1.10', password: 123456  
 LDAP user node presence attribute: uid: jack user password: abcdef  
 The jack@'172.10.1.10' account can be logged into by logging into Doris using the following command:
-```bash
+```shell
 mysql -hDoris_HOST -PDoris_PORT -ujack -p abcdef
 ```
 
 Login will fail with the following command:  
-```bash
+```shell
 mysql -hDoris_HOST -PDoris_PORT -ujack -p 123456
 ```
 
@@ -131,7 +112,7 @@ mysql -hDoris_HOST -PDoris_PORT -ujack -p 123456
 
 LDAP user node presence attribute: uid: jack User password: abcdef  
 Use the following command to create a temporary user and log in to jack@'%', the temporary user has basic privileges DatabasePrivs: Select_priv, Doris will delete the temporary user after the user logs out and logs in:  
-```bash
+```shell
 mysql -hDoris_HOST -PDoris_PORT -ujack -p abcdef
 ```
 
@@ -139,7 +120,7 @@ mysql -hDoris_HOST -PDoris_PORT -ujack -p abcdef
 
 Doris account exists: jack@'172.10.1.10', password: 123456  
 Login to the account using the Doris password, successfully:  
-```bash
+```shell
 mysql -hDoris_HOST -PDoris_PORT -ujack -p 123456
 ```
 

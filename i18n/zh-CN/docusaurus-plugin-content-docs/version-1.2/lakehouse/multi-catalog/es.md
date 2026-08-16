@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Elasticsearch
 
 Elasticsearch Catalog 除了支持自动映射 ES 元数据外，也可以利用 Doris 的分布式查询规划能力和 ES(Elasticsearch) 的全文检索能力相结合，提供更完善的 OLAP 分析场景解决方案：
@@ -50,17 +31,17 @@ CREATE CATALOG es PROPERTIES (
 
 ### 参数说明
 
-参数 | 是否必须 | 默认值 | 说明                                                                     
---- | --- | --- |------------------------------------------------------------------------
-`hosts` | 是 | | ES 地址，可以是一个或多个，也可以是 ES 的负载均衡地址                                         |
-`user` | 否 |  空 | ES 用户名                                                                 |
-`password` | 否 | 空 | 对应用户的密码信息                                                              |
-`doc_value_scan` | 否 | true | 是否开启通过 ES/Lucene 列式存储获取查询字段的值                                          |
-`keyword_sniff` | 否 | true | 是否对 ES 中字符串分词类型 text.fields 进行探测，通过 keyword 进行查询。设置为 false 会按照分词后的内容匹配 |
-`nodes_discovery` | 否 | true | 是否开启 ES 节点发现，默认为 true，在网络隔离环境下设置为 false，只连接指定节点                        |
-`ssl` | 否 | false | ES 是否开启 https 访问模式，目前在 fe/be 实现方式为信任所有                                 |
-`mapping_es_id` | 否 | false | 是否映射 ES 索引中的 `_id` 字段                                                  |
-`like_push_down` | 否 | true  | 是否将 like 转化为 wildchard 下推到 ES，会增加 ES cpu 消耗                            |
+参数               | 是否必须 | 默认值 | 说明                                                                                             |
+----------------- | ------- | ----- |-------------------------------------------------------------------------------------------------|
+`hosts`           | 是       |       | ES 地址，可以是一个或多个，也可以是 ES 的负载均衡地址                                                  |
+`user`            | 否       |  空   | ES 用户名                                                                                        |
+`password`        | 否       | 空    | 对应用户的密码信息                                                                                 |
+`doc_value_scan`  | 否       | true  | 是否开启通过 ES/Lucene 列式存储获取查询字段的值                                                       |
+`keyword_sniff`   | 否       | true  | 是否对 ES 中字符串分词类型 text.fields 进行探测，通过 keyword 进行查询。设置为 false 会按照分词后的内容匹配 |
+`nodes_discovery` | 否       | true  | 是否开启 ES 节点发现，默认为 true，在网络隔离环境下设置为 false，只连接指定节点                            |
+`ssl`             | 否       | false | ES 是否开启 https 访问模式，目前在 fe/be 实现方式为信任所有                                            |
+`mapping_es_id`   | 否       | false | 是否映射 ES 索引中的 `_id` 字段                                                                    |
+`like_push_down`  | 否       | true  | 是否将 like 转化为 wildchard 下推到 ES，会增加 ES cpu 消耗                                           |
 
 > 1. 认证方式目前仅支持 Http Basic 认证，并且需要确保该用户有访问: `/_cluster/state/、_nodes/http` 等路径和 index 的读权限; 集群未开启安全认证，用户名和密码不需要设置。
 > 
@@ -68,26 +49,26 @@ CREATE CATALOG es PROPERTIES (
 
 ## 列类型映射
 
-| ES Type | Doris Type | Comment                                                    |
-|---|---|------------------------------------------------------------|
-|null| null||
-| boolean | boolean |                                                            |
-| byte| tinyint|                                                            |
-| short| smallint|                                                            |
-| integer| int|                                                            |
-| long| bigint|                                                            |
-| unsigned_long| largeint |                                                            |
-| float| float|                                                            |
-| half_float| float|                                                            |
-| double | double |                                                            |
-| scaled_float| double |                                                            |
-| date | date | 仅支持 default/yyyy-MM-dd HH:mm:ss/yyyy-MM-dd/epoch_millis 格式 |
-| keyword | string |                                                            |
-| text |string |                                                            |
-| ip |string |                                                            |
-| nested |string |                                                            |
-| object |string |                                                            |
-|other| unsupported ||
+| ES Type       | Doris Type  | Comment                                                       |
+|---------------|-------------|---------------------------------------------------------------|
+| null          | null        |                                                               |
+| boolean       | boolean     |                                                               |
+| byte          | tinyint     |                                                               |
+| short         | smallint    |                                                               |
+| integer       | int         |                                                               |
+| long          | bigint      |                                                               |
+| unsigned_long | largeint    |                                                               |
+| float         | float       |                                                               |
+| half_float    | float       |                                                               | 
+| double        | double      |                                                               | 
+| scaled_float  | double      |                                                               |
+| date          | date        | 仅支持 default/yyyy-MM-dd HH:mm:ss/yyyy-MM-dd/epoch_millis 格式 |
+| keyword       | string      |                                                               |
+| text          | string      |                                                               |
+| ip            | string      |                                                               |
+| nested        | string      |                                                               |
+| object        | string      |                                                               |
+| other         | unsupported |                                                               |
 
 <version since="dev">
 
@@ -116,7 +97,7 @@ Elasticsearch 没有明确的数组类型，但是它的某个字段可以含有
 
 该结构的数组字段可以通过使用以下命令将字段属性定义添加到目标索引映射的`_meta.doris`属性来定义。
 
-```bash
+```shell
 # ES 7.x and above
 curl -X PUT "localhost:9200/doc/_mapping?pretty" -H 'Content-Type:application/json' -d '
 {
@@ -160,18 +141,18 @@ ES Catalog 支持过滤条件的下推: 过滤条件下推给ES，这样只有�
 
 下面的操作符(Operators)会被优化成如下ES Query:
 
-| SQL syntax  | ES 5.x+ syntax | 
-|-------|:---:|
-| =   | term query|
-| in  | terms query   |
-| > , < , >= , ⇐  | range query |
-| and  | bool.filter   |
-| or  | bool.should   |
-| not  | bool.must_not   |
-| not in  | bool.must_not + terms query |
-| is\_not\_null  | exists query |
-| is\_null  | bool.must_not + exists query |
-| esquery  | ES原生json形式的QueryDSL   |
+| SQL syntax      | ES 5.x+ syntax               | 
+|-----------------| :---------------------------:|
+| =               | term query                   |
+| in              | terms query                  |
+| > , < , >= , ⇐  | range query                  |
+| and             | bool.filter                  |
+| or              | bool.should                  |
+| not             | bool.must_not                |
+| not in          | bool.must_not + terms query  |
+| is\_not\_null   | exists query                 |
+| is\_null        | bool.must_not + exists query |
+| esquery         | ES原生json形式的QueryDSL       |
 
 ### 启用列式扫描优化查询速度(enable\_docvalue\_scan=true)
 

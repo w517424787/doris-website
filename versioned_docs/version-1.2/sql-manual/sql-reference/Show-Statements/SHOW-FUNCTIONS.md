@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## SHOW-FUNCTIONS
 
 ### Name
@@ -40,7 +21,7 @@ grammar
 
 ```sql
 SHOW [FULL] [BUILTIN] FUNCTIONS [IN|FROM db] [LIKE 'function_pattern']
-````
+```
 
 Parameters
 
@@ -53,7 +34,7 @@ grammar
 
 ```sql
 SHOW GLOBAL [FULL] FUNCTIONS [LIKE 'function_pattern']
-````
+```
 
 Parameters
 
@@ -65,7 +46,7 @@ Parameters
 
 ### Example
 
-````sql
+```sql
 mysql> show full functions in testDb\G
 **************************** 1. row ******************** ******
         Signature: my_add(INT,INT)
@@ -122,7 +103,7 @@ mysql> show global functions ;
 +---------------+
 2 rows in set (0.00 sec)    
     
-````
+```
 
 ### Keywords
 

@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Data Partitioning
 
 This topic is about table creation and data partitioning in Doris, including the common problems in table creation and their solutions.
@@ -38,7 +19,7 @@ A table contains rows and columns.
 
 Row refers to a row of data about the user. Column is used to describe different fields in a row of data.
 
-Columns can be divided into two categories: Key and Value. From a business perspective, Key and Value correspond to dimension columns and metric columns, respectively. In the Aggregate Model, rows with the same values in Key columns will be aggregated into one row. The way how Value columns are aggregated is specified by the user when the table is built. For more information about the Aggregate Model, please see the [Data Model](./data-model.md).
+Columns can be divided into two categories: Key and Value. From a business perspective, Key and Value correspond to dimension columns and metric columns, respectively. In the Aggregate Model, rows with the same values in Key columns will be aggregated into one row. The way how Value columns are aggregated is specified by the user when the table is built. For more information about the Aggregate Model, please see the [Data Model](../table-design/data-model/overview.md).
 
 ### Tablet & Partition
 
@@ -78,7 +59,8 @@ PARTITION BY RANGE(`date`)
 (
     PARTITION `p201701` VALUES LESS THAN ("2017-02-01"),
     PARTITION `p201702` VALUES LESS THAN ("2017-03-01"),
-    PARTITION `p201703` VALUES LESS THAN ("2017-04-01")
+    PARTITION `p201703` VALUES LESS THAN ("2017-04-01"),
+    PARTITION `p2018` VALUES [("2018-01-01"), ("2019-01-01"))
 )
 DISTRIBUTED BY HASH(`user_id`) BUCKETS 16
 PROPERTIES
@@ -124,7 +106,7 @@ PROPERTIES
 
 ### Definition of Column
 
-Here we only use the AGGREGATE KEY data model as an example. See [Doris Data Model](./data-model.md) for more information.
+ See [Doris Data Model](./data-model.md) for more information.
 
 You can view the basic types of columns by executing `HELP CREATE TABLE;` in MySQL Client.
 
@@ -254,7 +236,7 @@ It is also possible to use one layer of data partitioning. In this case, it only
 <version since="1.2.0">
     
 
-Range partitioning also supports batch partitioning. For example, you can create multiple partitions that are divided by day at a time using the `FROM ("2022-01-03") TO ("2022-01-06") INTERVAL 1 DAY`：2022-01-03 to 2022-01-06 (not including 2022-01-06), the results will be as follows:
+Range partitioning also supports batch partitioning. For example, you can create multiple partitions that are divided by day at a time using the `FROM ("2022-01-03") TO ("2022-01-06") INTERVAL 1 DAY`: 2022-01-03 to 2022-01-06 (not including 2022-01-06), the results will be as follows:
 
     p20220103:    [2022-01-03,  2022-01-04)
     p20220104:    [2022-01-04,  2022-01-05)

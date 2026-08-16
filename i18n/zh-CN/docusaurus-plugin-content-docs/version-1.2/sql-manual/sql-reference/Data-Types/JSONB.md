@@ -5,34 +5,11 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## JSONB
-
-<version since="1.2.0">
 
 JSONB
 
-</version>
-
-### description
+## 描述
     JSONB(JSON Binary)类型
         二进制JSON类型，采用二进制JSONB格式存储，通过jsonb函数访问JSON内部字段。最大（默认）支持1048576 字节（1MB），JSONB类型还受be配置`jsonb_type_length_soft_limit_bytes`限制
 
@@ -41,7 +18,7 @@ JSONB
     1. 数据写入时进行JSON格式校验
     2. 二进制存储格式更加高效，通过jsonb_extract等函数可以高效访问JSON内部字段，比get_json_xx函数快几倍
 
-### example
+## 举例
     用一个从建表、导数据、查询全周期的例子说明JSONB数据类型的功能和用法。
 
 #### 创建库表

@@ -1,11 +1,12 @@
 ---
 {
-    'title': 'A Glimpse of the Next-generation Analytical Database',
+    'title': 'A glimpse of the next-generation analytical database',
     'language': 'en',
-    'summary': "My name is Mingyu Chen and I am the PMC Chair of the Apache Doris.In this lecture, you will go through the development of Doris in 2022 and look into the new trends that Doris is exploring in 2023.",
+    'description': "My name is Mingyu Chen and I am the PMC Chair of the Apache Doris.In this lecture, you will go through the development of Doris in 2022 and look into the new trends that Doris is exploring in 2023.",
     'date': '2023-01-19',
     'author': 'Mingyu Chen',
     'tags': ['Top News'],
+    "image": '/images/a-glimpse-of-the-next-generation-analytical-database.png'
 }
 ---
 
@@ -72,7 +73,7 @@ It is memorable that in June 2022, Apache Doris graduated from the Apache incuba
 
 ## Open Source User Scale
 
-Thanks to the voluntary technical support from the developers of SelectDB, a commercial company funding Apache Doris. In 2022 Doris became smoother in user connection and communication, and we were able to interact with users more directly and listen to their real voices.
+Thanks to the voluntary technical support from the developers of SelectDB, a commercial company with products based on Apache Doris. In 2022 Doris became smoother in user connection and communication, and we were able to interact with users more directly and listen to their real voices.
 Last year, Apache Doris was applied in dozens of industries, such as the Internet, fintech, telecommunications, education, automobiles, manufacturing, logistics, energy, and government affairs, and especially in the Internet industry, which is known for massive data. 80% of the TOP 50 Chinese Internet companies have been using Apache Doris for a long time to solve data analysis problems in their own business, including Baidu, Meituan, Xiaomi, Tencent, JD.com, ByteDance , NetEase, Sina, 360 Total Security, MiHoYo, ZHIHU.COM, etc.
 
 ![logo wall](/images/summit/en/logo wall.png)

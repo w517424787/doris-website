@@ -6,25 +6,6 @@
 
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # load balancing
 
 When deploying multiple FE nodes, users can deploy a load balancing layer on top of multiple FEs to achieve high availability of Doris.
@@ -487,7 +468,7 @@ IP: 172.31.7.119
 
 ### Install dependencies
 
-```bash
+```shell
 sudo apt-get install build-essential
 sudo apt-get install libpcre3 libpcre3-dev 
 sudo apt-get install zlib1g-dev
@@ -496,7 +477,7 @@ sudo apt-get install openssl libssl-dev
 
 ### Install Nginx
 
-```bash
+```shell
 sudo wget http://nginx.org/download/nginx-1.18.0.tar.gz
 sudo tar zxvf nginx-1.18.0.tar.gz
 cd nginx-1.18.0
@@ -508,29 +489,29 @@ sudo make && make install
 
 Here is a new configuration file
 
-```bash
+```shell
 vim /usr/local/nginx/conf/default.conf
 ```
 
 Then add the following in it
 
-```bash
-events {
-worker_connections 1024;
-}
-stream {
-  upstream mysqld {
-      hash $remote_addr consistent;
-      server 172.31.7.119:9030 weight=1 max_fails=2 fail_timeout=60s;
-      ##注意这里如果是多个FE，加载这里就行了
-  }
-  ###这里是配置代理的端口，超时时间等
-  server {
-      listen 6030;
-      proxy_connect_timeout 300s;
-      proxy_timeout 300s;
-      proxy_pass mysqld;
-  }
+```shell
+events {  
+worker_connections 1024;  
+}  
+stream {  
+  upstream mysqld {  
+      hash $remote_addr consistent;  
+      server 172.31.7.119:9030 weight=1 max_fails=2 fail_timeout=60s;  
+      ## Note: If there are multiple FEs, just load them here.  
+  }  
+  ### Configuration for proxy port, timeout, etc.  
+  server {  
+      listen 6030;  
+      proxy_connect_timeout 300s;  
+      proxy_timeout 300s;  
+      proxy_pass mysqld;  
+  }  
 }
 ```
 
@@ -538,7 +519,7 @@ stream {
 
 Start the specified configuration file
 
-```bash
+```shell
 cd /usr/local/nginx
 /usr/local/nginx/sbin/nginx -c conf.d/default.conf
 ```

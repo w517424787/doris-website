@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## CREATE-RESOURCE
 
 ### Name
@@ -40,7 +21,7 @@ grammar:
 ```sql
 CREATE [EXTERNAL] RESOURCE "resource_name"
 PROPERTIES ("key"="value", ...);
-````
+```
 
 illustrate:
 
@@ -69,7 +50,7 @@ illustrate:
      "broker.username" = "user0",
      "broker.password" = "password0"
    );
-   ````
+   ```
 
    Spark related parameters are as follows:
    - spark.master: Required, currently supports yarn, spark://host:port.
@@ -100,7 +81,7 @@ illustrate:
    "odbc_type" = "oracle",
    "driver" = "Oracle 19 ODBC driver"
    );
-   ````
+   ```
 
    The relevant parameters of ODBC are as follows:
    - hosts: IP address of the external database
@@ -129,7 +110,7 @@ illustrate:
    );
    ```
 
-   If S3 resource is used for [cold hot separation](../../../../../docs/advanced/cold_hot_separation.md), we should add more required fields.
+   If S3 resource is used for [cold hot separation](../../../../advanced/cold-hot-separation.md), we should add more required fields.
    ```sql
    CREATE RESOURCE "remote_s3"
    PROPERTIES
@@ -183,19 +164,18 @@ illustrate:
    ```sql
    CREATE RESOURCE hdfs_resource PROPERTIES (
       "type"="hdfs",
-      "username"="user",
-      "password"="passwd",
+      "hadoop.username"="user",
       "dfs.nameservices" = "my_ha",
       "dfs.ha.namenodes.my_ha" = "my_namenode1, my_namenode2",
       "dfs.namenode.rpc-address.my_ha.my_namenode1" = "nn1_host:rpc_port",
       "dfs.namenode.rpc-address.my_ha.my_namenode2" = "nn2_host:rpc_port",
-      "dfs.client.failover.proxy.provider" = "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider"
+      "dfs.client.failover.proxy.provider.my_ha" = "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider"
    );
    ```
 
    HDFS related parameters are as follows:
    - fs.defaultFS: namenode address and port
-   - username: hdfs username
+   - hadoop.username: hdfs username
    - dfs.nameservices: if hadoop enable HA, please set fs nameservice. See hdfs-site.xml
    - dfs.ha.namenodes.[nameservice ID]：unique identifiers for each NameNode in the nameservice. See hdfs-site.xml
    - dfs.namenode.rpc-address.[nameservice ID].[name node ID]`：the fully-qualified RPC address for each NameNode to listen on. See hdfs-site.xml

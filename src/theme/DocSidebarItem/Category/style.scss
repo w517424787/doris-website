@@ -1,0 +1,106 @@
+.theme-doc-sidebar-menu.menu__list {
+    padding-left: 1rem;
+    .menu__link.menu__link--active:not(.menu__link--sublist) {
+        color: var(--ifm-color-primary) !important;
+        font-weight: 500;
+        background-color: var(--brand-surface-faint);
+    }
+    .menu__list-item {
+        a.menu__link {
+            line-height: 2rem;
+            padding: 0 0.625rem;
+            color: #1d1d1d !important;
+            // color: #4c576c;
+            // font-size: 14px;
+            font-weight: 400;
+            border-radius: 4px;
+            &:hover {
+                background-color: #F2F4F7 !important;
+            }
+            &:after {
+                right: 0;
+                background: url('../../../../static/images/chevron-down.svg') no-repeat center;
+            }
+        }
+    }
+
+    /* Top-level (section group) collapsible items in section 01..04 */
+    .menu__list_level_2 > .menu__list-item > .menu__list-item-collapsible {
+        position: relative;
+        > .menu__link--sublist {
+            font-size: var(--global-font-size-medium, 14px);
+            font-weight: 400;
+            color: #1F1F26 !important;
+        }
+        /* Active state for a category whose descendant is the current page */
+        > .menu__link--sublist.menu__link--active {
+            font-weight: 400 !important;
+            color: var(--ifm-color-primary) !important;
+            background-color: transparent !important;
+            &:hover {
+                background-color: #F2F4F7 !important;
+            }
+        }
+    }
+    #menu__group:hover {
+        background-color: white !important;
+    }
+    .menu__list .menu__list {
+        border-left: 1px solid #dfe5f0;
+    }
+
+    .title_level_1 {
+        color: #0D0D12;
+        font-size: 15px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 20px;
+        letter-spacing: 0.4px;
+        display: flex;
+        padding: 20px 10px 12px 10px;
+        align-items: baseline;
+        gap: 8px;
+        align-self: stretch;
+        margin: 0;
+    }
+
+    .title_level_1__label {
+        font-weight: 600;
+        color: #0D0D12;
+    }
+
+    @media (max-width: 996px) {
+        .title_level_1{
+            font-size: 1.125rem !important;
+        }
+    }
+
+    .menu__list_level_2 {
+        padding-left: 0 !important;
+        margin-top: 0 !important;
+    }
+    .community_level_2 {
+        padding-left: 0.75rem !important;
+    }
+    .community_level_2 {
+        padding-left: 0.75rem !important;
+    }
+
+    .divider {
+        width: calc(100% - 0.625rem);
+        height: 1px;
+        border: 0;
+        background-color: #E5E8EE;
+        margin: 20px 0 4px 0;
+        position: relative;
+        left: 0.625rem;
+    }
+}
+.menu__list-item .menu__link--sublist:after,
+.menu__list-item .menu__caret:before {
+    transform: rotateZ(0);
+}
+.menu__list-item--collapsed .menu__link--sublist:after,
+.menu__list-item--collapsed .menu__caret:before {
+    transform: rotateZ(-90deg);
+}

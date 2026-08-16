@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # import strict mode
 
 Strict mode (strict_mode) is configured as a parameter in the import operation. This parameter affects the import behavior of certain values and the final imported data.
@@ -55,16 +36,16 @@ Different import methods set strict mode in different ways.
    (
        "strict_mode" = "true"
    )
-   ````
+   ```
 
 2. [STREAM LOAD](../../../sql-manual/sql-reference/Data-Manipulation-Statements/Load/STREAM-LOAD.md)
 
-   ```bash
+   ```shell
    curl --location-trusted -u user:passwd \
    -H "strict_mode: true" \
    -T 1.txt \
    http://host:port/api/example_db/my_table/_stream_load
-   ````
+   ```
 
 3. [ROUTINE LOAD](../../../sql-manual/sql-reference/Data-Manipulation-Statements/Load/CREATE-ROUTINE-LOAD.md)
 
@@ -79,7 +60,7 @@ Different import methods set strict mode in different ways.
        "kafka_broker_list" = "broker1:9092,broker2:9092,broker3:9092",
        "kafka_topic" = "my_topic"
    );
-   ````
+   ```
 
 4. [INSERT](../../../sql-manual/sql-reference/Data-Manipulation-Statements/Manipulation/INSERT.md)
 
@@ -88,7 +69,7 @@ Different import methods set strict mode in different ways.
    ```sql
    SET enable_insert_strict = true;
    INSERT INTO my_table ...;
-   ````
+   ```
 
 ## The role of strict mode
 
@@ -106,7 +87,7 @@ For an imported column type that contains range restrictions, if the original da
 
    | Primitive data type | Primitive data example | Converted value to TinyInt | Strict mode | Result                   |
    | ------------------- | ---------------------- | -------------------------- | ----------- | ------------------------ |
-   | NULL                | \N                     | NULL                       | ON or OFF   | NULL                     |
+   | NULL                | `\N`                     | NULL                       | ON or OFF   | NULL                     |
    | Non-null value      | "abc" or 2000          | NULL                       | On          | Illegal value (filtered) |
    | non-null value      | "abc"                  | NULL                       | off         | NULL                     |
    | non-null value      | 1                      | 1                          | on or off   | import correctly         |
@@ -120,7 +101,7 @@ For an imported column type that contains range restrictions, if the original da
 
    | Primitive Data Types | Examples of Primitive Data | Converted to Decimal | Strict Mode | Result                   |
    | -------------------- | -------------------------- | -------------------- | ----------- | ------------------------ |
-   | Null                 | \N                         | null                 | On or Off   | NULL                     |
+   | Null                 | `\N`                         | null                 | On or Off   | NULL                     |
    | non-null value       | aaa                        | NULL                 | on          | illegal value (filtered) |
    | non-null value       | aaa                        | NULL                 | off         | NULL                     |
    | non-null value       | 1 or 10                    | 1 or 10              | on or off   | import correctly         |

@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Background
 
 <version since="1.2.2">
@@ -54,6 +35,11 @@ As you know from the above, a partitioned bucket is a Tablet at the physical lev
 
 - If the overall data volume is small, the number of buckets should not be set too high
 - If the overall data volume is large, the number of buckets should be related to the total number of disk blocks, so as to fully utilize the capacity of each BE machine and each disk
+
+:::tip
+propertie estimate_partition_size not support alter
+:::
+
 Initial bucketing projection
 Starting from the principle, it becomes easy to understand the detailed logic of the automatic bucket imputation function.
 First look at the initial bucketing

@@ -5,32 +5,13 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## CREATE-FILE
 
 ### Name
 
 CREATE FILE
 
-### Description
+## 描述
 
 该语句用于创建并上传一个文件到 Doris 集群。
 该功能通常用于管理一些其他命令中需要使用到的文件，如证书、公钥私钥等等。
@@ -57,7 +38,7 @@ CREATE FILE "file_name" [IN database]
     - catalog：必须。对文件的分类名，可以自定义。但在某些命令中，会查找指定 catalog 中的文件。比如例行导入中的，数据源为 kafka 时，会查找 catalog 名为 kafka 下的文件。
     - md5: 可选。文件的 md5。如果指定，会在下载文件后进行校验。
 
-### Example
+## 举例
 
 1. 创建文件 ca.pem ，分类为 kafka
 

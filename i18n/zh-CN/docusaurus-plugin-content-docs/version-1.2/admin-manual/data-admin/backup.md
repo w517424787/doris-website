@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # 数据备份
 
 Doris 支持将当前数据以文件的形式，通过 broker 备份到远端存储系统中。之后可以通过 恢复 命令，从远端存储系统中将数据恢复到任意 Doris 集群。通过这个功能，Doris 可以支持将数据定期的进行快照备份。也可以通过这个功能，在不同集群间进行数据迁移。
@@ -46,11 +27,11 @@ Doris 支持将当前数据以文件的形式，通过 broker 备份到远端存
 
 3. 动态分区表说明
 
-   如果该表是动态分区表，备份之后会自动禁用动态分区属性，在做恢复的时候需要手动将该表的动态分区属性启用，命令如下:
+   如果该表是动态分区表，备份之后会自动禁用动态分区属性，在做恢复的时候需要手动将该表的动态分区属性启用，命令如下：
 
-   ```sql
+```sql
    ALTER TABLE tbl1 SET ("dynamic_partition.enable"="true")
-   ```
+```
 
 4. 备份和恢复操作都不会保留表的 `colocate_with` 属性。
 
@@ -58,7 +39,7 @@ Doris 支持将当前数据以文件的形式，通过 broker 备份到远端存
 
 1. 创建一个 hdfs 的远程仓库 example_repo：
 
-   ```sql
+```sql
    CREATE REPOSITORY `example_repo`
    WITH BROKER `hdfs_broker`
    ON LOCATION "hdfs://hadoop-name-node:54310/path/to/repo/"
@@ -67,11 +48,11 @@ Doris 支持将当前数据以文件的形式，通过 broker 备份到远端存
       "username" = "user",
       "password" = "password"
    );
-   ```
+```
 
 2. 创建一个 s3 的远程仓库 : s3_repo
 
-   ```
+```
    CREATE REPOSITORY `s3_repo`
    WITH S3
    ON LOCATION "s3://bucket_name/test"
@@ -82,7 +63,7 @@ Doris 支持将当前数据以文件的形式，通过 broker 备份到远端存
        "AWS_SECRET_KEY"="xxx",
        "AWS_REGION" = "xxx"
    ); 
-   ```
+```
 
    >注意：
    >
@@ -90,16 +71,16 @@ Doris 支持将当前数据以文件的形式，通过 broker 备份到远端存
 
 2. 全量备份 example_db 下的表 example_tbl 到仓库 example_repo 中：
 
-   ```sql
+```sql
    BACKUP SNAPSHOT example_db.snapshot_label1
    TO example_repo
    ON (example_tbl)
    PROPERTIES ("type" = "full");
-   ```
+```
 
 3. 全量备份 example_db 下，表 example_tbl 的 p1, p2 分区，以及表 example_tbl2 到仓库 example_repo 中：
 
-   ```sql
+```sql
    BACKUP SNAPSHOT example_db.snapshot_label2
    TO example_repo
    ON
@@ -107,11 +88,11 @@ Doris 支持将当前数据以文件的形式，通过 broker 备份到远端存
       example_tbl PARTITION (p1,p2),
       example_tbl2
    );
-   ```
+```
 
 4. 查看最近 backup 作业的执行情况：
 
-   ```sql
+```sql
    mysql> show BACKUP\G;
    *************************** 1. row ***************************
                   JobId: 17891847
@@ -129,11 +110,11 @@ Doris 支持将当前数据以文件的形式，通过 broker 备份到远端存
                  Status: [OK]
                 Timeout: 86400
    1 row in set (0.01 sec)
-   ```
+```
 
 5. 查看远端仓库中已存在的备份
 
-   ```sql
+```sql
    mysql> SHOW SNAPSHOT ON example_repo WHERE SNAPSHOT = "snapshot_label1";
    +-----------------+---------------------+--------+
    | Snapshot        | Timestamp           | Status |
@@ -141,9 +122,9 @@ Doris 支持将当前数据以文件的形式，通过 broker 备份到远端存
    | snapshot_label1 | 2022-04-08-15-52-29 | OK     |
    +-----------------+---------------------+--------+
    1 row in set (0.15 sec)
-   ```
+```
 
-BACKUP的更多用法可参考 [这里](../../sql-manual/sql-reference/Data-Definition-Statements/Backup-and-Restore/BACKUP.md)。
+BACKUP 的更多用法可参考 [这里](../../sql-manual/sql-reference/Data-Definition-Statements/Backup-and-Restore/BACKUP.md)。
 
 ## 最佳实践
 
@@ -165,7 +146,7 @@ BACKUP的更多用法可参考 [这里](../../sql-manual/sql-reference/Data-Defi
 4. 因为备份恢复操作，操作的都是实际的数据文件。所以当一个表的分片过多，或者一个分片有过多的小版本时，可能即使总数据量很小，依然需要备份或恢复很长时间。用户可以通过 `SHOW PARTITIONS FROM table_name;` 和 `SHOW TABLETS FROM table_name;` 来查看各个分区的分片数量，以及各个分片的文件版本数量，来预估作业执行时间。文件数量对作业执行的时间影响非常大，所以建议在建表时，合理规划分区分桶，以避免过多的分片。
 5. 当通过 `SHOW BACKUP` 或者 `SHOW RESTORE` 命令查看作业状态时。有可能会在 `TaskErrMsg` 一列中看到错误信息。但只要 `State` 列不为 `CANCELLED`，则说明作业依然在继续。这些 Task 有可能会重试成功。当然，有些 Task 错误，也会直接导致作业失败。
    常见的`TaskErrMsg`错误如下：
-      Q1：备份到HDFS，状态显示UPLOADING，TaskErrMsg 错误信息：[13333: Close broker writer failed, broker:TNetworkAddress(hostname=10.10.0.0,port=8000) msg:errors while close file output stream, cause by: DataStreamer Exception: ]
+      Q1：备份到 HDFS，状态显示 UPLOADING，TaskErrMsg 错误信息：[13333: Close broker writer failed, broker:TNetworkAddress(hostname=10.10.0.0,port=8000) msg:errors while close file output stream, cause by: DataStreamer Exception: ]
       这个一般是网络通信问题，查看broker日志，看某个ip 或者端口不通，如果是云服务，则需要查看是否访问了内网，如果是，则可以在borker/conf文件夹下添加hdfs-site.xml，还需在hdfs-site.xml配置文件下添加dfs.client.use.datanode.hostname=true，并在broker节点上配置HADOOP集群的主机名映射。
 6. 如果恢复作业是一次覆盖操作（指定恢复数据到已经存在的表或分区中），那么从恢复作业的 `COMMIT` 阶段开始，当前集群上被覆盖的数据有可能不能再被还原。此时如果恢复作业失败或被取消，有可能造成之前的数据已损坏且无法访问。这种情况下，只能通过再次执行恢复操作，并等待作业完成。因此，我们建议，如无必要，尽量不要使用覆盖的方式恢复数据，除非确认当前数据已不再使用。
 
@@ -175,7 +156,7 @@ BACKUP的更多用法可参考 [这里](../../sql-manual/sql-reference/Data-Defi
 
 1. CREATE REPOSITORY
 
-   创建一个远端仓库路径，用于备份或恢复。该命令需要借助 Broker 进程访问远端存储，不同的 Broker 需要提供不同的参数，具体请参阅 [Broker文档](../../advanced/broker.md)，也可以直接通过S3 协议备份到支持AWS S3协议的远程存储上去，也可以直接备份到HDFS，具体参考 [创建远程仓库文档](../../sql-manual/sql-reference/Data-Definition-Statements/Backup-and-Restore/CREATE-REPOSITORY.md)
+   创建一个远端仓库路径，用于备份或恢复。该命令需要借助 Broker 进程访问远端存储，不同的 Broker 需要提供不同的参数，具体请参阅 [Broker 文档](../../data-operate/import/broker-load-manual#其他-broker-导入)，也可以直接通过 S3 协议备份到支持 AWS S3 协议的远程存储上去，也可以直接备份到 HDFS，具体参考 [创建远程仓库文档](../../sql-manual/sql-reference/Data-Definition-Statements/Backup-and-Restore/CREATE-REPOSITORY.md)
 
 2. BACKUP
 

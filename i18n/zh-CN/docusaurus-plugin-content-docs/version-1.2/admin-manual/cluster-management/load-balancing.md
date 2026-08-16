@@ -6,25 +6,6 @@
 
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # 负载均衡
 
 当部署多个 FE 节点时，用户可以在多个 FE 之上部署负载均衡层来实现 Doris 的高可用。
@@ -51,7 +32,7 @@ Doris 的 FE 进程负责接收用户连接和查询请求，其本身是可以�
 
 ### 安装ProxySQL （yum方式）
 
-```bash
+```shell
 配置yum源
 # vim /etc/yum.repos.d/proxysql.repo
 [proxysql_repo]
@@ -487,7 +468,7 @@ IP: 172.31.7.119
 
 ### 安装依赖
 
-```bash
+```shell
 sudo apt-get install build-essential
 sudo apt-get install libpcre3 libpcre3-dev 
 sudo apt-get install zlib1g-dev
@@ -496,7 +477,7 @@ sudo apt-get install openssl libssl-dev
 
 ### 安装Nginx
 
-```bash
+```shell
 sudo wget http://nginx.org/download/nginx-1.18.0.tar.gz
 sudo tar zxvf nginx-1.18.0.tar.gz
 cd nginx-1.18.0
@@ -508,13 +489,13 @@ sudo make && make install
 
 这里是新建了一个配置文件
 
-```bash
+```shell
 vim /usr/local/nginx/conf/default.conf
 ```
 
 然后在里面加上下面的内容
 
-```bash
+```shell
 events {
 worker_connections 1024;
 }

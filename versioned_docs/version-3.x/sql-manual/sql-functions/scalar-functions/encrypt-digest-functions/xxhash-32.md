@@ -1,0 +1,41 @@
+---
+{
+    "title": "XXHASH_32",
+    "language": "en",
+    "description": "Calculate the 32-bit xxhash value of the input string"
+}
+---
+
+## Description
+
+Calculate the 32-bit xxhash value of the input string
+
+## Syntax
+
+```sql
+XXHASH_32( <str> [ , <str> ... ] )
+```
+
+## Parameters
+
+| parameter | description      |
+|-----------|------------------|
+| `<str>`   | The 32-bit xxhash value to be calculated |
+
+## Return Value
+
+Returns the 32-bit xxhash value of the input string.
+
+## Examples
+
+```sql
+select xxhash_32(NULL), xxhash_32("hello"), xxhash_32("hello", "world");
+```
+
+```text
++-----------------+--------------------+-----------------------------+
+| xxhash_32(NULL) | xxhash_32('hello') | xxhash_32('hello', 'world') |
++-----------------+--------------------+-----------------------------+
+|            NULL |          -83855367 |                  -920844969 |
++-----------------+--------------------+-----------------------------+
+```

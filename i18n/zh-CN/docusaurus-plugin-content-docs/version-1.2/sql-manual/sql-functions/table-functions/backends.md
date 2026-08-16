@@ -1,28 +1,9 @@
 ---
 {
-    "title": "backends",
+    "title": "BACKENDS",
     "language": "zh-CN"
 }
 ---
-
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
 
 ## `backends`
 
@@ -34,13 +15,13 @@ backends
 
 </version>
 
-### description
+## 描述
 
 表函数，生成backends临时表，可以查看当前doris集群中的 BE 节点信息。
 
 该函数用于from子句中。
 
-#### syntax
+## 语法
 `backends()`
 
 backends()表结构：
@@ -81,7 +62,7 @@ mysql> desc function backends();
 
 `backends()` tvf展示出来的信息基本与 `show backends` 语句展示出的信息一致,但是`backends()` tvf的各个字段类型更加明确，且可以利用tvf生成的表去做过滤、join等操作。
 
-### example
+## 举例
 ```
 mysql> select * from backends()\G
 *************************** 1. row ***************************

@@ -5,28 +5,9 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## CREATE-TABLE
 
-### Description
+## 描述
 
 该命令用于创建一张表。本文档主要介绍创建 Doris 自维护的表的语法。外部表语法请参阅 [CREATE-EXTERNAL-TABLE](./CREATE-EXTERNAL-TABLE.md)文档。
 
@@ -370,7 +351,7 @@ distribution_desc
         * `dynamic_partition.history_partition_num`: 指定创建历史分区的数量。
         * `dynamic_partition.reserved_history_periods`: 用于指定保留的历史分区的时间段。
 
-### Example
+## 举例
 
 1. 创建一个明细模型的表
 
@@ -670,7 +651,7 @@ distribution_desc
 
 #### 分区和分桶
 
-一个表必须指定分桶列，但可以不指定分区。关于分区和分桶的具体介绍，可参阅 [数据划分](../../../../data-table/data-partition.md) 文档。
+一个表必须指定分桶列，但可以不指定分区。关于分区和分桶的具体介绍，可参阅 [数据划分](../../../../data-table/data-partition) 文档。
 
 Doris 中的表可以分为分区表和无分区的表。这个属性在建表时确定，之后不可更改。即对于分区表，可以在之后的使用过程中对分区进行增删操作，而对于无分区的表，之后不能再进行增加分区等操作。
 
@@ -680,7 +661,7 @@ Doris 中的表可以分为分区表和无分区的表。这个属性在建表�
 
 #### 动态分区
 
-动态分区功能主要用于帮助用户自动的管理分区。通过设定一定的规则，Doris 系统定期增加新的分区或删除历史分区。可参阅 [动态分区](../../../../advanced/partition/dynamic-partition.md) 文档查看更多帮助。
+动态分区功能主要用于帮助用户自动的管理分区。通过设定一定的规则，Doris 系统定期增加新的分区或删除历史分区。可参阅 [动态分区](../../../../advanced/partition/dynamic-partition) 文档查看更多帮助。
 
 #### 物化视图
 

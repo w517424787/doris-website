@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## SHOW-PROC
 
 ### Name
@@ -49,7 +30,7 @@ After connecting to Doris through the MySQL client, you can execute the SHOW PRO
 
 The results of the show proc statement are presented in a two-dimensional table. And usually the first column of the result table is the next subdirectory of proc.
 
-````none
+```none
 mysql> show proc "/";
 +---------------------------+
 | name                      |
@@ -79,7 +60,7 @@ mysql> show proc "/";
 | trash                     |
 +---------------------------+
 23 rows in set (0.00 sec)
-````
+```
 
 illustrate:
 
@@ -122,7 +103,7 @@ illustrate:
    | 10124   | test_parquet_import  | 1        | NULL                | 1            | NORMAL | OLAP | NULL                     | 1            |
    +---------+----------------------+----------+---------------------+--------------+--------+------+--------------------------+--------------+
    4 rows in set (0.00 sec)
-   ````
+   ```
 
 2. Display information about the number of all database tables in the cluster.
 
@@ -135,11 +116,11 @@ illustrate:
    | Total | 1                    | 4        | 12           | 12       | 21        | 21         |
    +-------+----------------------+----------+--------------+----------+-----------+------------+
    2 rows in set (0.00 sec)
-   ````
+   ```
 
 3. The following command can view the existing Group information in the cluster.
 
-   ````
+   ```
    SHOW PROC '/colocation_group';
    
    +-------------+--------------+--------------+------------+----------------+----------+----------+
@@ -147,7 +128,7 @@ illustrate:
    +-------------+--------------+--------------+------------+----------------+----------+----------+
    | 10005.10008 | 10005_group1 | 10007, 10040 | 10         | 3              | int(11)  | true     |
    +-------------+--------------+--------------+------------+----------------+----------+----------+
-   ````
+   ```
 
    - GroupId: The cluster-wide unique identifier of a group, the first half is the db id, and the second half is the group id.
    - GroupName: The full name of the Group.
@@ -174,7 +155,7 @@ illustrate:
    | 6           | 10003, 10004, 10001 |
    | 7           | 10003, 10004, 10002 |
    +-------------+---------------------+
-   ````
+   ```
 
    - BucketIndex: The index of the bucket sequence.
    - BackendIds: The list of BE node IDs where the data shards in the bucket are located.
@@ -214,7 +195,7 @@ illustrate:
    | Total                   | 0         | 0        |
    +-------------------------+-----------+----------+
    26 rows in set (0.01 sec)
-   ````
+   ```
 
 5. Display the replica status of the entire cluster.
    ```sql

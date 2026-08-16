@@ -7,25 +7,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 <!-- Please sort the configuration alphabetically -->
 
 # BE 配置项
@@ -265,10 +246,10 @@ BE 重启后该配置将失效。如果想持久化修改结果，使用如下�
 
 #### `brpc_num_threads`
 
-* 描述：该配置主要用来修改brpc中bthreads的数量. 该配置的默认值被设置为-1, 这意味着bthreads的数量将被设置为机器的cpu核数。
+* 描述：该配置主要用来修改brpc中bthreads的数量. 该配置的默认值被设置为 256。
 
-  - 用户可以将该配置的值调大来获取更好的QPS性能。更多的信息可以参考`https://github.com/apache/incubator-brpc/blob/master/docs/cn/benchmark.md`。
-* 默认值：-1
+  - 用户可以将该配置的值调大来获取更好的QPS性能。更多的信息可以参考 `https://github.com/apache/brpc/blob/master/docs/cn/benchmark.md`。
+* 默认值：256
 
 #### `thrift_rpc_timeout_ms`
 
@@ -1445,5 +1426,11 @@ load tablets from header failed, failed tablets size: xxx, path=xxx
 
 * 描述: 是否在导入json数据时用simdjson来解析。
 * 默认值: false
+
+
+#### `be_thrift_max_pkg_bytes`
+
+* 描述: be节点thrift端口最大接收包大小
+* 默认值: 20000000
 
 </version>

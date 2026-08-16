@@ -1,91 +1,40 @@
 ---
 {
-    "title": "DataX doriswriter",
+    "title": "DataX Doriswriter",
     "language": "en"
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
+# DataX Doriswriter
 
-  http://www.apache.org/licenses/LICENSE-2.0
+The [DataX](https://github.com/alibaba/DataX) Doriswriter plugin supports synchronizing data from various data sources, such as MySQL, Oracle, and SQL Server, into Doris using the Stream Load method.
 
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
-# DataX doriswriter
-
-[DataX](https://github.com/alibaba/DataX) doriswriter plug-in, used to synchronize data from other data sources to Doris through DataX.
-
-The plug-in uses Doris' Stream Load function to synchronize and import data. It needs to be used with DataX service.
-
-## About DataX
-
-DataX is an open source version of Alibaba Cloud DataWorks data integration, an offline data synchronization tool/platform widely used in Alibaba Group. DataX implements efficient data synchronization functions between various heterogeneous data sources including MySQL, Oracle, SqlServer, Postgre, HDFS, Hive, ADS, HBase, TableStore (OTS), MaxCompute (ODPS), Hologres, DRDS, etc.
-
-More details can be found at: `https://github.com/alibaba/DataX/`
+:::info Note
+This plugin needs to be used together with the DataX service.
+DataX supports multiple data sources. For more details, see here.
+:::
 
 ## Usage
 
-The code of DataX doriswriter plug-in can be found [here](https://github.com/apache/incubator-doris/tree/master/extension/DataX).
+### Directly Download the DataX Installation Package
 
-This directory is the doriswriter plug-in development environment of Alibaba DataX.
+DataX provides an official installation package that already includes DataX, which can be downloaded and used directly. For more details, refer to [here](https://github.com/alibaba/DataX?tab=readme-ov-file#download-datax%E4%B8%8B%E8%BD%BD%E5%9C%B0%E5%9D%80).
 
-Because the doriswriter plug-in depends on some modules in the DataX code base, and these module dependencies are not submitted to the official Maven repository, when we develop the doriswriter plug-in, we need to download the complete DataX code base to facilitate our development and compilation of the doriswriter plug-in.
+### Compile the DorisWriter Plugin Manually
 
-### Directory structure
-
-1. `doriswriter/`
-
-    This directory is the code directory of doriswriter, and this part of the code should be in the Doris code base.
-
-    The help doc can be found in `doriswriter/doc`
-
-2. `init-env.sh`
-
-    The script mainly performs the following steps:
-
-    1. Git clone the DataX code base to the local
-    2. Softlink the `doriswriter/` directory to `DataX/doriswriter`.
-    3. Add `<module>doriswriter</module>` to the original `DataX/pom.xml`
-    4. Change httpclient version from 4.5 to 4.5.13 in DataX/core/pom.xml
-
-        > httpclient v4.5 can not handle redirect 307 correctly.
-
-    After that, developers can enter `DataX/` for development. And the changes in the `DataX/doriswriter` directory will be reflected in the `doriswriter/` directory, which is convenient for developers to submit code.
-
-### How to build
-
-#### Doris code base compilation
+Download the [source code](https://github.com/apache/doris/tree/master/extension/DataX) for the DorisWriter plugin.
 
 1. Run `init-env.sh`
 2. Modify code of doriswriter in `DataX/doriswriter` if you need.
 3. Build doriswriter
 
-    1. Build doriswriter along:
+    > Build doriswriter along:
 
         `mvn clean install -pl plugin-rdbms-util,doriswriter -DskipTests`
 
-    2. Build DataX:
+    > If you need to compile the entire DataX project, please refer to [here](https://github.com/alibaba/DataX/blob/master/userGuid.md#quick-start)
 
-        `mvn package assembly:assembly -Dmaven.test.skip=true`
-
-        The output will be in `target/datax/datax/`.
-
-        > hdfsreader, hdfswriter and oscarwriter needs some extra jar packages. If you don't need to use these components, you can comment out the corresponding module in DataX/pom.xml.
-
-    3. Compilation error
+    > Compilation error
 
         If you encounter the following compilation errors:
 
@@ -96,22 +45,7 @@ Because the doriswriter plug-in depends on some modules in the DataX code base, 
         You can try the following solutions:
 
         1. Download [alibaba-datax-maven-m2-20210928.tar.gz](https://doris-thirdparty-repo.bj.bcebos.com/thirdparty/alibaba-datax-maven-m2-20210928.tar.gz)
-        2. After decompression, copy the resulting `alibaba/datax/` directory to `.m2/repository/com/alibaba/` corresponding to the maven used.
-        3. Try to compile again.
-
-4. Commit code of doriswriter in `doriswriter` if you need.
-
-#### Datax code base compilation
-
-Pull the code from the datax code library and execute the compilation
-
-```
-git clone https://github.com/alibaba/DataX.git
-cd datax
-mvn package assembly:assembly -Dmaven.test.skip=true
-```
-
-After compiling, you can see the datax.tar.gz package under `datax/target/Datax`
+        2. After decompression, copy the resulting `alibaba/datax/` directory to `.m2/repository/com/alibaba/` corresponding to the maven used, and try to compile again. 
 
 ### Datax DorisWriter parameter introduction:
 
@@ -122,7 +56,7 @@ After compiling, you can see the datax.tar.gz package under `datax/target/Datax`
   - Default: None
 * **loadUrl**
 
-  - Description: As a connection target for Stream Load. The format is "ip:port". Where IP is the FE node IP, port is the http_port of the FE node. You can fill in more than one, separated by a semicolon in English: `;`, doriswriter will visit in a polling manner.
+  - Description: As a connection target for Stream Load. The format is "ip:port". Where IP is the FE node IP, port is the http_port of the FE node. You can fill in more than one, separated by commas in English: `,`, doriswriter will visit in a polling manner.
   - Mandatory: Yes
   - Default: None
 * **username**
@@ -171,7 +105,7 @@ After compiling, you can see the datax.tar.gz package under `datax/target/Datax`
 * **batchSize**
   - Description: The maximum amount of data imported in each batch. Works with **maxBatchRows** to control the number of imports per batch. When each batch of data reaches one of the two thresholds, the data of this batch will start to be imported.
   - Mandatory: No
-  - Default: 104857600
+  - Default: 94371840
 
 * **maxRetries**
 
@@ -188,7 +122,7 @@ After compiling, you can see the datax.tar.gz package under `datax/target/Datax`
 
 * **loadProps**
 
-  - Description: The request parameter of StreamLoad. For details, refer to the StreamLoad introduction page. [Stream load - Apache Doris](https://doris.apache.org/zh-CN/docs/data-operate/import/import-way/stream-load-manual)
+  - Description: The request parameter of StreamLoad. For details, refer to the StreamLoad introduction page. [Stream load - Apache Doris](https://doris.apache.org/docs/data-operate/import/stream-load-manual)
 
     This includes the imported data format: format, etc. The imported data format defaults to csv, which supports JSON. For details, please refer to the type conversion section below, or refer to the official information of Stream load above.
 
@@ -268,8 +202,6 @@ my_import.json
                     "name": "doriswriter",
                     "parameter": {
                         "loadUrl": ["127.0.0.1:8030"],
-                        "loadProps": {
-                        },
                         "column": ["id","order_code","line_code","remark","unit_no","unit_name","price"],
                         "username": "root",
                         "password": "xxxxxx",
@@ -314,7 +246,7 @@ my_import.json
 >1. Here we use JSON format to import data
 >2. `line_delimiter` defaults to a newline character, which may conflict with the value in the data, we can use some special characters or invisible characters to avoid import errors
 >3. strip_outer_array : Represents multiple rows of data in a batch of imported data. Doris will expand the array when parsing, and then parse each Object in it as a row of data in turn.
->4. For more parameters of Stream load, please refer to [Stream load document]([Stream load - Apache Doris](https://doris.apache.org/zh-CN/docs/dev/data-operate/import/import-way /stream-load-manual))
+>4. For more parameters of Stream load, please refer to [Stream load - Apache Doris](../data-operate/import/import-way/stream-load-manual)
 >5. If it is in CSV format, we can use it like this
 >
 >```json
@@ -325,7 +257,7 @@ my_import.json
 >}
 >```
 >
->**CSV format should pay special attention to row and column separators to avoid conflicts with special characters in the data. Hidden characters are recommended here. The default column separator is: \t, row separator: \n**
+>**CSV format should pay special attention to row and column separators to avoid conflicts with special characters in the data. Hidden characters are recommended here. The default column separator is: `\t`, row separator: `\n`**
 
 4.Execute the datax task, refer to the specific [datax official website](https://github.com/alibaba/DataX/blob/master/userGuid.md)
 
@@ -383,13 +315,13 @@ Wed Nov 16 14:29:04 GMT+08:00 2022 WARN: Establishing SSL connection without ser
 2022-11-16 14:29:04.205 [job-0] INFO  JobContainer - PerfTrace not enable!
 2022-11-16 14:29:04.206 [job-0] INFO  StandAloneJobContainerCommunicator - Total 2 records, 214 bytes | Speed 21B/s, 0 records/s | Error 0 records, 0 bytes |  All Task WaitWriterTime 0.000s |  All Task WaitReaderTime 0.000s | Percentage 100.00%
 2022-11-16 14:29:04.206 [job-0] INFO  JobContainer - 
-任务启动时刻                    : 2022-11-16 14:28:53
-任务结束时刻                    : 2022-11-16 14:29:04
-任务总计耗时                    :                 10s
-任务平均流量                    :               21B/s
-记录写入速度                    :              0rec/s
-读出记录总数                    :                   2
-读写失败总数                    :                   0
+Task Start Time                        : 2022-11-16 14:28:53
+Task End Time                          : 2022-11-16 14:29:04
+Total Task Duration                    : 10s
+Average Task Throughput                : 21B/s
+Record Write Speed                     : 0rec/s
+Total Records Read                     : 2
+Total Read/Write Failures              : 0
 
 ```
 

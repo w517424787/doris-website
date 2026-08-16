@@ -1,0 +1,765 @@
+---
+{
+    "title": "VARIANT",
+    "language": "en-US",
+    "description": "VARIANT stores semi-structured JSON data and supports typed access, casts, hash-based grouping, deduplication, and selected SQL operations."
+}
+---
+
+## VARIANT
+
+## Overview
+
+The VARIANT type stores semi-structured JSON data. It can contain different primitive types (integers, strings, booleans, etc.), one-dimensional arrays, and nested objects. On write, Doris infers the structure and type of sub-paths based on JSON paths and performs Subcolumnization on frequent paths, exposing them as independent columnar subcolumns for both flexibility and performance.
+
+:::tip Why VARIANT
+`VARIANT` is a good fit when document shape changes over time but queries still focus on a small set of hot paths.
+
+- Hot paths participate in Subcolumnization, so they benefit from columnar performance, file pruning, and vectorized execution.
+- Key paths can use path-level indexes, full-text search, and still benefit from Doris sparse-index pruning.
+- Wide-column optimizations keep automatic Subcolumnization practical at 10k-scale subcolumns. When paths participating in Subcolumnization approach 10,000, hardware requirements rise quickly, so DOC mode is usually the safer starting point.
+
+If you still need to choose between default behavior, sparse columns, DOC mode, and Schema Template, start with [Variant Workload Guide](./variant-workload-guide). This page is the reference for syntax, type rules, indexes, limits, and configuration.
+:::
+
+## Using VARIANT
+
+### Create table syntax
+
+Declare a VARIANT column when creating a table:
+
+```sql
+CREATE TABLE IF NOT EXISTS ${table_name} (
+    k BIGINT,
+    v VARIANT
+)
+PROPERTIES("replication_num" = "1");
+```
+
+Constrain certain paths with a Schema Template (see “Extended types”):
+
+```sql
+CREATE TABLE IF NOT EXISTS ${table_name} (
+    k BIGINT,
+    v VARIANT <
+        'id' : INT,            -- restrict path id to INT
+        'message*' : STRING,   -- restrict message* prefix to STRING
+        'tags*' : ARRAY<TEXT>  -- restrict tags* prefix to ARRAY<TEXT>
+    >
+)
+PROPERTIES("replication_num" = "1");
+```
+
+### Query syntax
+
+```sql
+-- Access nested fields (returns VARIANT; explicit or implicit CAST is required for aggregation/comparison)
+SELECT v['properties']['title'] FROM ${table_name};
+
+-- CAST to a concrete type before aggregation
+SELECT CAST(v['properties']['title'] AS STRING) AS title
+FROM ${table_name}
+GROUP BY title;
+
+-- Query arrays
+SELECT *
+FROM ${table_name}
+WHERE ARRAY_CONTAINS(CAST(v['tags'] AS ARRAY<TEXT>), 'Doris');
+```
+
+## Create and access values
+
+:::info Version availability
+The behavior in this section applies to Doris 4.2 and later.
+:::
+
+VARIANT values can be created from JSON text, JSON/JSONB values, or typed SQL expressions:
+
+- Use [PARSE_TO_VARIANT](../../../sql-functions/scalar-functions/variant-functions/parse-to-variant) when a string or JSON/JSONB expression should be parsed as a structured VARIANT value.
+- Use `CAST(expression AS VARIANT)` to convert a supported SQL value to VARIANT. A string remains a VARIANT string value; this CAST does not parse JSON.
+
+### Parse JSON text
+
+```sql
+SELECT PARSE_TO_VARIANT('{"user": {"id": 42}, "active": true}');
+SELECT PARSE_TO_VARIANT('[10, 20, 30]');
+SELECT PARSE_TO_VARIANT(CAST('{"user": {"id": 42}}' AS JSON));
+```
+
+Use [TRY_PARSE_TO_VARIANT](../../../sql-functions/scalar-functions/variant-functions/try-parse-to-variant) when invalid JSON should return SQL `NULL` instead of failing the query.
+
+### Access objects and arrays
+
+Object fields can be accessed with a string key. In Doris 4.2 and later, positive VARIANT array indexes start from 1, and negative indexes count backward from the end. The extracted value remains `VARIANT`; CAST it before typed comparison, arithmetic, or aggregation.
+
+```sql
+SELECT CAST(PARSE_TO_VARIANT('{"user": {"id": 42}}')['user']['id'] AS BIGINT);
+SELECT ELEMENT_AT(PARSE_TO_VARIANT('[10, 20, 30]'), 1);  -- 10
+SELECT ELEMENT_AT(PARSE_TO_VARIANT('[10, 20, 30]'), -1); -- 30
+```
+
+See [ELEMENT_AT](../../../sql-functions/scalar-functions/variant-functions/element-at) for object and array access details.
+
+## CAST rules
+
+CAST involving VARIANT has two directions: converting a supported SQL value to VARIANT and extracting a compatible SQL value from VARIANT.
+
+### CAST other types to VARIANT
+
+| Source type | Behavior |
+| --- | --- |
+| `CHAR`, `VARCHAR`, `STRING` | Preserves the input as a VARIANT string. JSON-looking text is not parsed. |
+| `BOOLEAN` | Preserves the Boolean value. |
+| `TINYINT`, `SMALLINT`, `INT`, `BIGINT`, `LARGEINT` | Preserves the integer value. |
+| `FLOAT`, `DOUBLE` | Preserves the floating-point value. |
+| `DECIMALV2`, `DECIMAL(p, s)` with `p <= 38` | Preserves the Decimal value, subject to the limits below. |
+| `DATE`, `DATETIME`, `TIMESTAMPTZ` | Preserves the typed logical value. |
+| `IPV4`, `IPV6` | Preserves the IP address value. |
+| `JSON` / `JSONB` | Converts the structured value directly to VARIANT. If the input contains a JSONB value type that VARIANT cannot represent, the BE returns an error. |
+| `ARRAY<T>` | Converts each element recursively when `T` is `VARIANT` or is also in this whitelist, and preserves SQL NULL elements. |
+
+Only the source types listed above are supported. Other source types, including `MAP`, `STRUCT`, `TIME`, Decimal values with precision greater than 38, and arrays containing an unsupported element type, cause the BE to return an error.
+
+```sql
+-- A string remains a VARIANT string root, even if it looks like JSON.
+SELECT CAST(CAST('{"id": 1}' AS VARIANT) AS STRING) AS string_value,
+       VARIANT_TYPE(CAST('{"id": 1}' AS VARIANT)) AS root_type;
+-- string_value: {"id": 1}; root_type: string
+
+-- Parse JSON text explicitly when a structured VARIANT value is required.
+SELECT PARSE_TO_VARIANT('{"id": 1}') AS parsed_object;
+-- {"id":1}
+
+-- JSON/JSONB input is converted structurally.
+SELECT CAST(CAST('{"id": 1}' AS JSON) AS VARIANT) AS parsed_object;
+-- {"id":1}
+```
+
+Because string CAST does not parse JSON, malformed JSON text is still a valid VARIANT string. Use `PARSE_TO_VARIANT` for strict JSON parsing or `TRY_PARSE_TO_VARIANT` when malformed input should become SQL `NULL`.
+
+### CAST VARIANT to other types
+
+VARIANT can be cast to a compatible scalar, JSON/JSONB, or array target:
+
+| Target type | Behavior |
+| --- | --- |
+| `BOOLEAN` | Converts a compatible Boolean or scalar root. |
+| `TINYINT`, `SMALLINT`, `INT`, `BIGINT`, `LARGEINT` | Converts a compatible scalar root to the requested integer type. |
+| `FLOAT`, `DOUBLE` | Converts a compatible numeric root. |
+| `DECIMALV2`, `DECIMAL(p, s)` | Converts a compatible numeric root to the requested Decimal type. |
+| `DATE`, `DATETIME`, `TIMESTAMPTZ` | Converts a compatible date/time root. |
+| `CHAR`, `VARCHAR`, `STRING` | Returns scalar text for scalar roots and JSON text for objects and arrays. Variant/JSON `null` becomes the string `null`; outer SQL `NULL` remains SQL `NULL`. |
+| `IPV4`, `IPV6` | Converts a compatible IP address root to the requested IP address type. |
+| `JSON` / `JSONB` | Converts the value structurally. If the VARIANT value contains a type that JSON/JSONB cannot represent, the BE returns an error. |
+| `ARRAY<T>` | Converts a VARIANT array element by element when `T` is `VARIANT` or is also in this whitelist; incompatible elements follow the target CAST rules. |
+
+Only the target types listed above are supported. Other target types, including `MAP`, `STRUCT`, and `TIME`, cause the BE to return an error. For a supported target, an incompatible value shape, invalid text, or numeric overflow follows the applicable CAST error-or-NULL behavior.
+
+```sql
+SELECT CAST(PARSE_TO_VARIANT('42') AS BIGINT) AS id;
+-- 42
+
+SELECT CAST(PARSE_TO_VARIANT('[1, null, 3]') AS ARRAY<INT>) AS values;
+-- [1, NULL, 3]
+
+SELECT CAST(PARSE_TO_VARIANT('{"id": 1}') AS JSON) AS json_value;
+-- {"id":1}
+```
+
+### Decimal and date/time conversion limits
+
+| Doris input type | Supported VARIANT behavior |
+| --- | --- |
+| Legacy `DECIMALV2` | Precision up to 27 and scale up to 9 are preserved exactly. |
+| `DECIMAL(p, s)` | `1 <= p <= 38` and `0 <= s <= p` are preserved exactly. Values that require precision greater than 38 are not supported. |
+| `DATE` | Preserved as a calendar date with no time or time zone. |
+| Legacy `DATETIME` | Preserved with whole-second precision and no time-zone adjustment. |
+| `DATETIME(p)` | Supports `0 <= p <= 6` with no time-zone adjustment. |
+| `TIMESTAMPTZ(p)` | Supports `0 <= p <= 6` with time-zone-adjusted timestamp semantics. |
+| Decimal precision greater than 38 | Not supported as input to VARIANT. |
+| `TIME` | Not supported as input to VARIANT. |
+
+Every source value must also be valid for its Doris source type. Unsupported precision, invalid dates, or incompatible values return an error instead of being repaired.
+
+## Grouping, deduplication, and hash semantics
+
+In Doris 4.2 and later, grouping, deduplication, and set operations treat logically equivalent VARIANT values as the same value, regardless of source SQL type or physical representation:
+
+- Equivalent integral numeric representations are treated as the same value.
+- Decimal trailing zeros do not change the value, so `1.20` and `1.2` are treated as the same value.
+- `+0`, `-0`, and integral zero are treated as the same value.
+- Object key order does not affect whether values are treated as the same, while array element order does.
+- Variant/JSON `null` is distinct from SQL `NULL`.
+
+Hash-based operators use the same logical-value rules when calculating their keys. Values treated as the same under the rules above therefore produce the same internal hash key, regardless of whether they came from parsed JSON or a typed CAST. This hash is an implementation detail, not a stable user-facing checksum.
+
+These rules apply to supported operations such as `GROUP BY`, `DISTINCT`, `COUNT(DISTINCT ...)`, `INTERSECT`, `EXCEPT`, and `UNION DISTINCT`. They do not enable root VARIANT comparison predicates: direct `VARIANT = VARIANT` and ordering comparisons remain unsupported.
+
+```sql
+-- 1 and 1.0 have one distinct logical value.
+SELECT COUNT(DISTINCT value) AS distinct_count
+FROM (
+    SELECT PARSE_TO_VARIANT('1') AS value
+    UNION ALL
+    SELECT PARSE_TO_VARIANT('1.0') AS value
+) AS numeric_values;
+-- distinct_count: 1
+
+-- Object key order is ignored; array order is preserved.
+SELECT COUNT(DISTINCT value) AS distinct_count
+FROM (
+    SELECT PARSE_TO_VARIANT('{"a": 1, "b": 2}') AS value
+    UNION ALL
+    SELECT PARSE_TO_VARIANT('{"b": 2, "a": 1}') AS value
+) AS object_values;
+-- distinct_count: 1
+
+SELECT COUNT(DISTINCT value) AS distinct_count
+FROM (
+    SELECT PARSE_TO_VARIANT('[1, 2]') AS value
+    UNION ALL
+    SELECT PARSE_TO_VARIANT('[2, 1]') AS value
+) AS array_values;
+-- distinct_count: 2
+```
+
+## NULL semantics
+
+SQL `NULL` and Variant/JSON `null` are different values:
+
+- SQL `NULL` represents the absence of a SQL value and follows normal SQL NULL propagation.
+- Variant/JSON `null` is a VARIANT value, for example the result of `PARSE_TO_VARIANT('null')`.
+- `TRY_PARSE_TO_VARIANT` returns SQL `NULL` for malformed input. This differs from successfully parsing the JSON literal `null`.
+
+## Primitive types
+
+VARIANT infers subcolumn types automatically. Supported types include:
+
+<table>
+<tr><td>Supported types<br/></td></tr>
+<tr><td>TinyInt<br/></td></tr>
+<tr><td>NULL (equivalent to JSON null)<br/></td></tr>
+<tr><td>BigInt (64 bit)<br/>Double<br/></td></tr>
+<tr><td>String (Text)<br/></td></tr>
+<tr><td>Jsonb<br/></td></tr>
+<tr><td>Variant (nested object)<br/></td></tr>
+<tr><td>Array&lt;T&gt; (one-dimensional only)<br/></td></tr>
+</table>
+
+Simple INSERT example:
+
+```sql
+INSERT INTO vartab VALUES
+  (1, 'null'),
+  (2, NULL),
+  (3, 'true'),
+  (4, '-17'),
+  (5, '123.12'),
+  (6, '1.912'),
+  (7, '"A quote"'),
+  (8, '[-1, 12, false]'),
+  (9, '{ "x": "abc", "y": false, "z": 10 }'),
+  (10, '"2021-01-01"');
+```
+
+Tip: Non-standard JSON types such as date/time will be stored as strings unless a Schema Template is provided. For better computation efficiency, consider extracting them to static columns or declaring their types via a Schema Template.
+
+## Extended types (Schema Template)
+
+Besides primitive types, VARIANT supports the following extended types via Schema Template:
+
+- Number (extended)
+  - Decimal: Decimal32 / Decimal64 / Decimal128 / Decimal256
+  - LargeInt
+- Datetime
+- Timestamptz
+- Date
+- IPV4 / IPV6
+- Boolean
+- ARRAY&lt;T&gt; (T can be any of the above, one-dimensional only)
+
+Note: Predefined Schema can only be specified at table creation. ALTER is currently not supported (future versions may support adding new subcolumn definitions, but changing an existing subcolumn type is not supported).
+
+Example:
+
+```sql
+CREATE TABLE test_var_schema (
+    id BIGINT NOT NULL,
+    v1 VARIANT<
+        'large_int_val': LARGEINT,
+        'string_val': STRING,
+        'decimal_val': DECIMAL(38, 9),
+        'datetime_val': DATETIME,
+        'tz_val': TIMESTAMPTZ,
+        'ip_val': IPV4
+    > NULL
+)
+PROPERTIES ("replication_num" = "1");
+
+INSERT INTO test_var_schema VALUES (1, '{
+    "large_int_val" : "123222222222222222222222",
+    "string_val" : "Hello World",
+    "decimal_val" : 1.11111111,
+    "datetime_val" : "2025-05-16 11:11:11",
+    "tz_val" : "2025-05-16 11:11:11+08:00",
+    "ip_val" : "127.0.0.1"
+}');
+
+SELECT variant_type(v1) FROM test_var_schema;
+
++---------------------------------------------------------------------------------------------------------------------------------------------------+
+| variant_type(v1)                                                                                                                                  |
++---------------------------------------------------------------------------------------------------------------------------------------------------+
+| {"datetime_val":"datetimev2","decimal_val":"decimal128i","ip_val":"ipv4","large_int_val":"largeint","string_val":"string","tz_val":"timestamptz"} |
++---------------------------------------------------------------------------------------------------------------------------------------------------+
+```
+
+`{"date": 2020-01-01}` and `{"ip": 127.0.0.1}` are invalid JSON texts; the correct format is `{"date": "2020-01-01"}` and `{"ip": "127.0.0.1"}`.
+
+Once a Schema Template is specified, if a JSON value conflicts with the declared type and cannot be converted, it will be stored as NULL. For example:
+
+```sql
+INSERT INTO test_var_schema VALUES (1, '{
+  "decimal_val" : "1.11111111",
+  "ip_val" : "127.xxxxxx.xxxx",
+  "large_int_val" : "aaabbccc"
+}');
+
+-- Only decimal_val remains
+SELECT * FROM test_var_schema;
+
++------+-----------------------------+
+| id   | v1                          |
++------+-----------------------------+
+|    1 | {"decimal_val":1.111111110} |
++------+-----------------------------+
+```
+
+Schema only guides the persisted storage type. Query expressions that are not written to a table still keep their actual runtime types:
+
+```sql
+-- The quoted JSON member is a STRING. PARSE_TO_VARIANT is used because
+-- CAST(string AS VARIANT) always preserves the whole input as a string.
+SELECT variant_type(PARSE_TO_VARIANT('{"a" : "12345"}')['a']);
+```
+
+Wildcard matching and order:
+
+```sql
+CREATE TABLE test_var_schema (
+    id BIGINT NOT NULL,
+    v1 VARIANT<
+        'enumString*' : STRING,
+        'enum*' : ARRAY<TEXT>,
+        'ip*' : IPV6
+    > NULL
+)
+PROPERTIES ("replication_num" = "1");
+
+-- If enumString1 matches both patterns, the first matching pattern in definition order (STRING) is used
+```
+
+If a column name contains `*` and you want to match it by its literal name (not as a prefix wildcard), use:
+
+```sql
+v1 VARIANT<
+    MATCH_NAME 'enumString*' : STRING
+> NULL
+```
+
+Matched subpaths participate in Subcolumnization by default and are exposed as columns. If too many paths match and generate excessive columns, consider enabling `variant_enable_typed_paths_to_sparse` (see “Configuration”).
+
+## Type conflicts and promotion rules
+
+When incompatible types appear on the same path (e.g., the same field shows up as both integer and string), the type is promoted to JSONB to avoid information loss:
+
+```sql
+{"a" : 12345678}
+{"a" : "HelloWorld"}
+-- a will be promoted to JSONB
+```
+
+Promotion rules:
+
+| Source type    | Current type  | Final type   |
+| -------------- | ------------- | ------------ |
+| `TinyInt`      | `BigInt`      | `BigInt`     |
+| `TinyInt`      | `Double`      | `Double`     |
+| `TinyInt`      | `String`      | `JSONB`      |
+| `TinyInt`      | `Array`       | `JSONB`      |
+| `BigInt`       | `Double`      | `JSONB`      |
+| `BigInt`       | `String`      | `JSONB`      |
+| `BigInt`       | `Array`       | `JSONB`      |
+| `Double`       | `String`      | `JSONB`      |
+| `Double`       | `Array`       | `JSONB`      |
+| `Array<Double>`| `Array<String>`| `Array<Jsonb>` |
+
+If you need strict types (for stable indexing and storage), declare them via Schema Template.
+
+## Variant indexes
+
+### Choosing indexes
+
+VARIANT supports BloomFilter and Inverted Index on subpaths.
+- High-cardinality equality/IN filters: prefer BloomFilter (sparser index, better write performance).
+- Tokenization/phrase/range search: use Inverted Index and set proper `parser`/`analyzer` properties.
+
+```sql
+...  
+PROPERTIES("replication_num" = "1", "bloom_filter_columns" = "v");
+
+-- Use BloomFilter for equality/IN filters
+SELECT * FROM tbl WHERE v['id'] = 12345678;
+SELECT * FROM tbl WHERE v['id'] IN (1, 2, 3);
+```
+
+Once an inverted index is created on a VARIANT column, all subpaths inherit the same index properties (e.g., parser):
+
+```sql
+CREATE TABLE IF NOT EXISTS tbl (
+    k BIGINT,
+    v VARIANT,
+    INDEX idx_v(v) USING INVERTED PROPERTIES("parser" = "english")
+);
+
+-- All subpaths inherit the english parser
+SELECT * FROM tbl WHERE v['id_1'] MATCH 'Doris';
+SELECT * FROM tbl WHERE v['id_2'] MATCH 'Apache';
+```
+
+### Index by subpath
+
+In 3.1.x/4.0 and later, you can specify index properties for certain VARIANT subpaths, and even configure both tokenized and non-tokenized inverted indexes for the same path. Path-specific indexes require the path type to be declared via Schema Template.
+
+```sql
+-- Common properties: field_pattern (target path), analyzer, parser, support_phrase, etc.
+CREATE TABLE IF NOT EXISTS tbl (
+    k BIGINT,
+    v VARIANT<'content' : STRING>,
+    INDEX idx_tokenized(v) USING INVERTED PROPERTIES("parser" = "english", "field_pattern" = "content"),
+    INDEX idx_v(v) USING INVERTED PROPERTIES("field_pattern" = "content")
+);
+
+-- v.content has both tokenized and non-tokenized inverted indexes
+SELECT * FROM tbl WHERE v['content'] MATCH 'Doris';
+SELECT * FROM tbl WHERE v['content'] = 'Doris';
+```
+
+Wildcard path indexing:
+
+```sql
+CREATE TABLE IF NOT EXISTS tbl (
+    k BIGINT,
+    v VARIANT<'pattern_*' : STRING>,
+    INDEX idx_tokenized(v) USING INVERTED PROPERTIES("parser" = "english", "field_pattern" = "pattern_*"),
+    INDEX idx_v(v) USING INVERTED -- global non-tokenized inverted index
+);
+
+SELECT * FROM tbl WHERE v['pattern_1'] MATCH 'Doris';
+SELECT * FROM tbl WHERE v['pattern_1'] = 'Doris';
+```
+
+Note: 2.1.7+ supports only InvertedIndex V2 properties (fewer files, lower write IOPS; suitable for disaggregated storage/compute). 2.1.8+ removes offline Build Index.
+
+### When indexes don’t work
+
+1. Type changes cause index loss: if a subpath changes to an incompatible type (e.g., INT → JSONB), the index is lost. Fix by pinning types and indexes via Schema Template.
+2. Query type mismatch:
+   ```sql
+   -- v['id'] is actually STRING; using INT equality causes index not to be used
+   SELECT * FROM tbl WHERE v['id'] = 123456;
+   ```
+3. Misconfigured index: indexes apply to subpaths, not the entire VARIANT column.
+   ```sql
+   -- VARIANT itself cannot be indexed as a whole
+   SELECT * FROM tbl WHERE v MATCH 'Doris';
+
+   -- If whole-JSON search is needed, store a duplicate STRING column and index it
+   CREATE TABLE IF NOT EXISTS tbl (
+       k BIGINT,
+       v VARIANT,
+       v_str STRING,
+       INDEX idx_v_str(v_str) USING INVERTED PROPERTIES("parser" = "english")
+   );
+   SELECT * FROM tbl WHERE v_str MATCH 'Doris';
+   ```
+
+## INSERT and load
+
+### INSERT INTO VALUES
+
+```sql
+CREATE TABLE IF NOT EXISTS variant_tbl (
+    k BIGINT,
+    v VARIANT
+) PROPERTIES("replication_num" = "1");
+
+INSERT INTO variant_tbl VALUES (1, '{"a" : 123}');
+
+select * from variant_tbl;
++------+-----------+
+| k    | v         |
++------+-----------+
+|    1 | {"a":123} |
++------+-----------+
+
+-- v['a'] is a VARIANT
+select v['a'] from variant_tbl;
++--------+
+| v['a'] |
++--------+
+| 123    |
++--------+
+
+-- Accessing a non-existent key returns NULL
+select v['a']['no_such_key'] from variant_tbl;;
++-----------------------+
+| v['a']['no_such_key'] |
++-----------------------+
+| NULL                  |
++-----------------------+
+
+```
+
+### Load (Stream Load)
+
+```bash
+# Line-delimited JSON (one JSON record per line)
+curl --location-trusted -u root: -T gh_2022-11-07-3.json \
+  -H "read_json_by_line:true" -H "format:json" \
+  http://127.0.0.1:8030/api/test_variant/github_events/_stream_load
+```
+
+See also: `https://doris.apache.org/docs/dev/data-operate/import/complex-types/variant`
+
+After loading, verify with `SELECT count(*)` or sample with `SELECT * ... LIMIT 1`. For high-throughput ingestion, prefer RANDOM bucketing and enable Group Commit.
+
+## Output
+
+The JSON text returned when reading a VARIANT column is not byte-for-byte identical to the JSON text that was written in: inside a JSON object, keys are emitted in sorted (lexicographic) order regardless of the order they appeared in the input JSON.
+
+```sql
+INSERT INTO variant_tbl VALUES
+  (2, '{ "b": 2, "a": 1, "c": { "y": 20, "x": 10 } }');
+
+SELECT v FROM variant_tbl WHERE k = 2;
++-----------------------------------+
+| v                                 |
++-----------------------------------+
+| {"a":1,"b":2,"c":{"x":10,"y":20}} |
++-----------------------------------+
+```
+
+Sorting applies at every level — top-level keys become `a`, `b`, `c`, and the nested object's keys become `x`, `y`.
+
+## Supported operations
+
+In Doris 4.2 and later, whole VARIANT values support hash-based grouping and deduplication, but they do not support comparison, join-key, or ordering semantics.
+
+| Operation on a whole VARIANT value | Support | Notes |
+| --- | --- | --- |
+| `GROUP BY` | Supported | Uses the grouping and hash rules described above. |
+| `DISTINCT`, `COUNT(DISTINCT ...)` | Supported | Logically equivalent values are deduplicated. |
+| `INTERSECT`, `EXCEPT`, `UNION DISTINCT` | Supported | Uses the same rules described above. |
+| `COUNT(*)`, `COUNT(variant)` | Supported | `COUNT(variant)` excludes outer SQL `NULL` in the normal SQL manner. |
+| `IF`, `CASE`, `IFNULL`, `COALESCE` | Supported | Conditional expressions can return and consume VARIANT values. |
+| VARIANT in transient `ARRAY`, `MAP`, or `STRUCT` expressions | Supported | This does not allow these nested types in persisted table schemas. |
+| `EXPLODE_VARIANT_ARRAY`, `EXPLODE`/`EXPLODE_OUTER` on `ARRAY<VARIANT>` | Supported | Emits VARIANT elements and preserves SQL NULL versus Variant/JSON `null`. |
+| `=`, `!=`, `<=>`, `<`, `<=`, `>`, `>=` | Not supported | Extract and CAST a comparable subpath on both sides. |
+| Join key | Not supported | CAST the required subpath to the same concrete type on both inputs. |
+| `ORDER BY`, Sort/TopN key | Not supported | CAST the required subpath before ordering. |
+| Window partition/order key | Not supported | A whole VARIANT value cannot be a window key. |
+| `MIN(variant)`, `MAX(variant)` | Not supported | CAST a scalar subpath before aggregation. |
+
+For comparison, filtering, arithmetic, and ordering, extract the required subpath and CAST it to a concrete type explicitly or implicitly:
+
+```sql
+-- Explicit CAST
+SELECT CAST(v['arr'] AS ARRAY<TEXT>) FROM tbl;
+SELECT * FROM tbl WHERE CAST(v['decimal'] AS DECIMAL(27, 9)) = 1.111111111;
+SELECT * FROM tbl WHERE CAST(v['date'] AS DATE) = '2021-01-02';
+
+-- Implicit CAST
+SELECT * FROM tbl WHERE v['bool'];
+SELECT * FROM tbl WHERE v['str'] MATCH 'Doris';
+```
+
+## Wide columns
+
+When ingested data contains many distinct JSON keys, the number of subcolumns produced by Subcolumnization can grow rapidly; at scale this may cause metadata bloat, higher write/merge cost, and query slowdowns. To address “wide columns” (too many subcolumns), VARIANT provides two mechanisms: **Sparse columns** and **DOC encoding**.
+
+For workload selection guidance, see [Variant Workload Guide](./variant-workload-guide). This section only explains the mechanisms and their related properties.
+
+Note: these two mechanisms are mutually exclusive—enabling DOC encoding disables sparse columns, and vice versa.
+
+### Sparse columns
+
+**How it works**
+
+- The system ranks paths by non-null ratio / sparsity: high-frequency (less-sparse) paths go through Subcolumnization and are stored as independent subcolumns; remaining low-frequency (sparse) paths are merged and stored in sparse columns. The maximum number of extracted subcolumns is controlled by `variant_max_subcolumns_count`.
+- If a path is declared in a Schema Template, by default it will not be moved into sparse columns; set `variant_enable_typed_paths_to_sparse` to allow typed paths to be moved into sparse columns.
+- Sparse columns support sharding: distribute sparse subpaths across multiple sparse columns to reduce per-column read overhead and improve read efficiency. Use `variant_sparse_hash_shard_count` to specify how many sparse columns are physically stored.
+
+**Reference notes**
+
+- If most keys have similar non-null ratios (little sparsity contrast), it’s hard to identify truly sparse paths and the benefit of sparse columns is reduced.
+- `variant_max_subcolumns_count` defaults to `2048`, which is already enough for most workloads. Avoid raising it aggressively just to pre-allocate more extracted subcolumns; if the workload truly needs large-scale Subcolumnization, prefer <a href="./variant-workload-guide#doc-mode-template">DOC mode</a>. The practical upper bound is still recommended to stay ≤ `10000`.
+- `variant_sparse_hash_shard_count` can be roughly estimated as “number of sparse paths / 128”. Example: total JSON keys ≈ 10,000, `variant_max_subcolumns_count = 2000`, then sparse paths ≈ 8000, so `variant_sparse_hash_shard_count` can start around `8000/128`.
+
+### DOC encoding (DOC mode)
+
+**How it works**
+
+- Paths can still go through Subcolumnization for path-based queries, and the original JSON is additionally stored as a stored field to return the full JSON document efficiently.
+- DOC encoding supports sharding: the original JSON is split into multiple columns for storage and reassembled when querying the full JSON. Use `variant_doc_hash_shard_count` to specify the number of DOC shards.
+- For small-batch writes, Subcolumnization can be skipped and deferred to later merges. This is controlled by `variant_doc_materialization_min_rows`. For example, if `variant_doc_materialization_min_rows = 10000`, writes below 10,000 rows will only store the original JSON and won’t trigger Subcolumnization for that batch.
+- For ultra-wide workloads, DOC mode is also the more stable choice when Subcolumnization scale approaches ten-thousand subcolumns. Compared with default eager Subcolumnization, compaction memory can drop by about two-thirds, and sparse wide-column ingest throughput can improve by about 5-10x.
+- When a `VARIANT` column is very wide and queries often read the whole document, DOC mode can improve `SELECT variant_col` performance by orders of magnitude compared with reconstructing the document from many subcolumns.
+
+**Reference notes**
+
+- DOC mode requires `variant_enable_doc_mode = true`.
+- In DOC mode, typed paths declared via Schema Template are limited to numeric, string, and array types.
+- `variant_doc_hash_shard_count` can be roughly estimated as “total JSON keys / 128”.
+
+See the “Configuration” section below for the full property list.
+
+## Limitations
+
+- **Wide tables optimization**: For wide tables with a large number of dynamic sub-columns (e.g., more than 2000 columns) generated by the `VARIANT` type, it is highly recommended to enable **Storage Format V3** by specifying `"storage_format" = "V3"` in the table `PROPERTIES`. This decouples column metadata from the Segment Footer, speeding up file opening and reducing memory overhead.
+- JSON key length ≤ 255.
+- Cannot be a primary key or sort key.
+- Persisted table schemas cannot nest VARIANT within other types (for example, `ARRAY<VARIANT>` or `STRUCT<VARIANT>`). Transient expression results can use the supported nested-container operations listed above.
+- Outside DOC mode, reading the entire VARIANT column scans all subpaths. For very wide columns, direct `SELECT variant_col` is generally not recommended unless DOC mode is enabled. If a column has many subpaths, consider storing the original JSON string in an extra STRING/JSONB column for whole-object searches like `LIKE`:
+
+```sql
+CREATE TABLE example_table (
+  id INT,
+  data_variant VARIANT
+);
+SELECT * FROM example_table WHERE data_variant LIKE '%doris%';
+
+-- Better: keep the original JSON string for whole-object matching
+CREATE TABLE example_table (
+  id INT,
+  data_string STRING,
+  data_variant VARIANT
+);
+SELECT * FROM example_table WHERE data_string LIKE '%doris%';
+```
+
+## Configuration
+
+Starting from 3.1+, VARIANT supports type-level properties on columns:
+
+```sql
+CREATE TABLE example_table (
+  id INT,
+  data_variant VARIANT<
+      'path_1' : INT,
+      'path_2' : STRING,
+      properties(
+          'variant_max_subcolumns_count' = '2048',
+          'variant_enable_typed_paths_to_sparse' = 'true',
+          'variant_sparse_hash_shard_count' = '64'
+      )
+  >
+);
+```
+
+<table>
+<tr><td>Property</td><td>Description</td></tr>
+<tr><td>`variant_max_subcolumns_count`</td><td>Max number of paths that can go through Subcolumnization. Above the threshold, new paths may be stored in a shared data structure. Default: 2048 (Recommended), which is already enough for most workloads. Avoid setting it too large. If the workload truly needs very large extracted-subcolumn scale, prefer <a href="./variant-workload-guide#doc-mode-template">DOC mode</a>. 0 means no limit; do not exceed 10000.</td></tr>
+<tr><td>`variant_enable_typed_paths_to_sparse`</td><td>By default, typed paths always participate in Subcolumnization (and do not count against `variant_max_subcolumns_count`). When set to `true`, typed paths also count toward the threshold and may be moved to the shared structure.</td></tr>
+<tr><td>`variant_sparse_hash_shard_count`</td><td>Shard count for sparse columns. Distributes sparse subpaths across multiple sparse columns to improve read performance. Default: 1; tune based on the number of sparse subpaths.</td></tr>
+</table>
+
+```sql
+CREATE TABLE example_table (
+  id INT,
+  data_variant VARIANT<
+      'path_1' : INT,
+      'path_2' : STRING,
+      properties(
+          'variant_enable_doc_mode' = 'true',
+          'variant_doc_materialization_min_rows' = '10000',
+          'variant_doc_hash_shard_count' = '64'
+      )
+  >
+);
+```
+
+<table>
+<tr><td>Property</td><td>Description</td></tr>
+<tr><td>`variant_enable_doc_mode`</td><td>Enable DOC encoding mode. When `true`, the original JSON is stored as a stored field to quickly return the whole JSON document. DOC mode is mutually exclusive with sparse columns. Default: `false`.</td></tr>
+<tr><td>`variant_doc_materialization_min_rows`</td><td>Minimum row threshold to trigger Subcolumnization in DOC mode. When rows are below this value, only the original JSON is stored; after compaction merges files to reach the threshold, Subcolumnization is performed. Helps reduce overhead for small-batch writes.</td></tr>
+<tr><td>`variant_doc_hash_shard_count`</td><td>Shard count for DOC encoding. The original JSON is split into the specified number of columns for storage and reassembled when querying the whole JSON. Default: 64; tune based on JSON size and concurrency.</td></tr>
+</table>
+
+Behavior at limits and tuning suggestions:
+
+1. After exceeding the threshold, new paths are written into the shared structure; Rowset merges may also recycle some paths into the shared structure.
+2. The system prefers to keep paths with higher non-null ratios and higher access frequencies in Subcolumnization.
+3. Close to 10,000 paths in Subcolumnization requires strong hardware (≥128G RAM, ≥32C per node recommended). If the workload is already near this range, prefer evaluating DOC mode first.
+4. Ingestion tuning: increase client `batch_size` appropriately, or use Group Commit (increase `group_commit_interval_ms`/`group_commit_data_bytes` as needed).
+5. If partition pruning is not needed, consider RANDOM bucketing and enabling single-tablet loading to reduce compaction write amplification.
+6. BE tuning knobs: `max_cumu_compaction_threads` (≥8), `vertical_compaction_num_columns_per_group=500` (improves vertical compaction but increases memory), `segment_cache_memory_percentage=20` (improves metadata cache efficiency).
+7. Watch Compaction Score; if it keeps rising, compaction is lagging—reduce ingestion pressure.
+8. Avoid large `SELECT *` on VARIANT; prefer specific projections like `SELECT v['path']`.
+
+Note: If you see Stream Load error `[DATA_QUALITY_ERROR]Reached max column size limit 2048` (only on 2.1.x and 3.0.x), it means the merged tablet schema reached its column limit. You may increase `variant_max_merged_tablet_schema_size` (not recommended beyond 4096; requires strong hardware).
+
+## Inspect number of columns and types
+
+Approach 1: use `variant_type` to inspect per-row schema (more precise, higher cost):
+
+```sql
+SELECT variant_type(v) FROM variant_tbl;
+```
+
+Approach 2: extended `DESC` to show subpaths extracted through Subcolumnization:
+
+```sql
+SET describe_extend_variant_column = true;
+DESC variant_tbl;
+```
+
+```sql
+DESCRIBE ${table_name} PARTITION ($partition_name);
+```
+
+Use both: Approach 1 is precise; Approach 2 is efficient.
+
+## Compared with JSON type
+
+- Storage: JSON is stored as JSONB (row-oriented). VARIANT uses Subcolumnization on write (higher compression, smaller size).
+- Query: JSON requires parsing. VARIANT scans columns directly and is usually much faster.
+
+ClickBench (43 queries):
+- Storage: VARIANT saves ~65% vs JSON.
+- Query: VARIANT is 8x+ faster than JSON, close to predefined static columns.
+
+**Storage space**
+
+| Type                | Size       |
+| ------------------- | ---------- |
+| Predefined columns  | 12.618 GB  |
+| VARIANT             | 12.718 GB  |
+| JSON                | 35.711 GB  |
+
+**~65% space savings**
+
+| Run             | Predefined | VARIANT | JSON            |
+| ----------------| ---------- | ------- | --------------- |
+| First (cold)    | 233.79s    | 248.66s | Most timed out  |
+| Second (hot)    | 86.02s     | 94.82s  | 789.24s         |
+| Third (hot)     | 83.03s     | 92.29s  | 743.69s         |
+
+## FAQ
+
+1. Are `null` in VARIANT and SQL `NULL` different?
+   - No. They are equivalent.
+2. Why doesn’t my query/index work?
+   - Check whether you CAST paths to the correct types; whether the type was promoted to JSONB due to conflicts; or whether you mistakenly expect an index on the whole VARIANT instead of on subpaths.
+3. Why does DECIMAL lose precision when written into a VARIANT column?
+   - When writing to a VARIANT column, the subcolumn type is not inferred as DECIMAL — numeric values are stored as DOUBLE, which can drop trailing decimals. Even declaring the subpath as DECIMAL via the Schema Template (e.g. `pm25 VARIANT<'xxx': DECIMAL(6, 2)>`) does not fully guarantee precision, because the value is first parsed as DOUBLE and then converted to DECIMAL on the write path. If the JSON value is written as a string (e.g. `'{"num": "12.345"}'`) together with a matching Schema Template DECIMAL declaration (e.g. `DECIMAL(9, 3)`), the string is parsed directly into DECIMAL on write, preserving precision.

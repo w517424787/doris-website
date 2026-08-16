@@ -5,32 +5,13 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
-
 # Iceberg
 
 ## 使用限制
 
 1. 支持 Iceberg V1/V2 表格式。
 2. V2 格式仅支持 Position Delete 方式，不支持 Equality Delete。
+3. 支持 Parquet 文件格式
 
 <version since="dev">
 
@@ -129,7 +110,25 @@ CREATE CATALOG iceberg PROPERTIES (
 
 ## 列类型映射
 
-和 Hive Catalog 一致，可参阅 [Hive Catalog](./hive.md) 中 **列类型映射** 一节。
+| Iceberg Type                               | Doris Type   |
+|--------------------------------------------|--------------|
+| boolean                                    | boolean      |
+| int                                        | int          |
+| long                                       | bigint       |
+| float                                      | float        |
+| double                                     | double       |
+| decimal(p,s)                               | decimal(p,s) |
+| date                                       | date         |
+| uuid                                       | string       |
+| timestamp (Timestamp without timezone)     | datetime(6)  |
+| timestamptz (Timestamp with timezone)      | datetime(6)  |
+| string                                     | string       |
+| fixed(L)                                   | char(L)      |
+| binary                                     | string       |
+| list                                       | array        |
+| struct                                     | 不支持        |
+| map                                        | 不支持        |
+| time                                       | 不支持        |
 
 ## Time Travel
 
@@ -149,4 +148,4 @@ CREATE CATALOG iceberg PROPERTIES (
 
 `SELECT * FROM iceberg_tbl FOR VERSION AS OF 868895038966572;`
 
-另外，可以使用 [iceberg_meta](../../sql-manual/sql-functions/table-functions/iceberg_meta.md) 表函数查询指定表的 snapshot 信息。
+另外，可以使用 [iceberg_meta](../../sql-manual/sql-functions/table-functions/iceberg-meta.md) 表函数查询指定表的 snapshot 信息。

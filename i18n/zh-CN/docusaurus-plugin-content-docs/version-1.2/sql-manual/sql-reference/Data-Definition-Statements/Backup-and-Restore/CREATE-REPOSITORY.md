@@ -5,32 +5,13 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## CREATE-REPOSITORY
 
 ### Name
 
 CREATE REPOSITORY
 
-### Description
+## 描述
 
 该语句用于创建仓库。仓库用于属于备份或恢复。仅 root 或 superuser 用户可以创建仓库。
 
@@ -45,12 +26,12 @@ PROPERTIES ("key"="value", ...);
 
 说明：
 
-- 仓库的创建，依赖于已存在的 broker 或者直接通过AWS s3 协议访问云存储，或者直接访问HDFS
+- 仓库的创建，依赖于已存在的 broker 或者直接通过 AWS s3 协议访问云存储，或者直接访问 HDFS
 - 如果是只读仓库，则只能在仓库上进行恢复。如果不是，则可以进行备份和恢复操作。
-- 根据 broker 或者S3、hdfs的不同类型，PROPERTIES 有所不同，具体见示例。
+- 根据 broker 或者 S3、hdfs 的不同类型，PROPERTIES 有所不同，具体见示例。
 - ON LOCATION ,如果是 S3 , 这里后面跟的是 Bucket Name。
 
-### Example
+## 举例
 
 1. 创建名为 bos_repo 的仓库，依赖 BOS broker "bos_broker"，数据根目录为：bos://palo_backup
 
@@ -93,7 +74,7 @@ PROPERTIES
 );
 ```
 
-4. 创建名为 s3_repo 的仓库，直接链接云存储，而不通过broker.
+4. 创建名为 s3_repo 的仓库，直接链接云存储，而不通过 broker.
 
 ```sql
 CREATE REPOSITORY `s3_repo`
@@ -108,7 +89,7 @@ PROPERTIES
 );
 ```
 
-5. 创建名为 hdfs_repo 的仓库，直接链接HDFS，而不通过broker.
+5. 创建名为 hdfs_repo 的仓库，直接链接 HDFS，而不通过 broker.
 
 ```sql
 CREATE REPOSITORY `hdfs_repo`
@@ -139,9 +120,8 @@ PROPERTIES
 
 7. 使用临时秘钥创建名为 minio_repo 的仓库
 
-<version since="1.2"></version>
 
-```
+```sql
 CREATE REPOSITORY `minio_repo`
 WITH S3
 ON LOCATION "s3://minio_repo"
@@ -157,7 +137,7 @@ PROPERTIES
 
 8. 使用腾讯云 COS 创建仓库
 
-```
+```sql
 CREATE REPOSITORY `cos_repo`
 WITH S3
 ON LOCATION "s3://backet1/"

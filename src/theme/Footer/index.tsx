@@ -1,28 +1,64 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+
 import { useThemeConfig } from '@docusaurus/theme-common';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import FooterLinks from '@theme/Footer/Links';
 import FooterLogo from '@theme/Footer/Logo';
 import FooterCopyright from '@theme/Footer/Copyright';
+import FooterLayout from '@theme/Footer/Layout';
 import './styles.scss';
 import { MailIcon } from '@site/src/components/Icons/mail';
 import { GithubIcon } from '@site/src/components/Icons/github';
 import { TwitterIcon } from '@site/src/components/Icons/twitter';
 import { SlackIcon } from '@site/src/components/Icons/slack';
+import { DiscordIcon } from '@site/src/components/Icons/discord-icon';
 import { BilibiliIcon } from '@site/src/components/Icons/bilibili';
 import { WechatIcon } from '@site/src/components/Icons/wechat';
 import { YoutubeIcon } from '@site/src/components/Icons/youtube';
 import { LinkedinIcon } from '@site/src/components/Icons/linkedin';
-
+import { MediumIcon } from '@site/src/components/Icons/medium';
 import Translate from '@docusaurus/Translate';
+import Link from '@docusaurus/Link';
+import { normalizePathname } from '@site/src/utils/locale';
 
-function Footer() {
+function Footer(): React.ReactElement | null {
     const { footer } = useThemeConfig();
     if (!footer) {
         return null;
     }
     const { copyright, links, logo, style } = footer;
+    const {
+        i18n: { locales },
+    } = useDocusaurusContext();
+
+    const [isDocsPage, setIsDocsPage] = useState(false); // docs page or community page
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const normalizedPathname = normalizePathname(location.pathname, locales);
+            const pathname = normalizedPathname.split('/')[1];
+            const docsPage = pathname === 'docs' || normalizedPathname.startsWith('/community');
+            setIsDocsPage(docsPage);
+        }
+    }, [locales, typeof window !== 'undefined' && location.pathname]);
+
+    const ResourcesItems = (links.find(e => e.title === 'Resources')?.items || []) as any[];
+    const CommunityItems = (links.find(e => e.title === 'Community')?.items || []) as any[];
+    if (isDocsPage) {
+        return (
+            <div className="docs-footer flex-col lg:flex-row">
+                <p className='docs-footer-p'>
+                    The contents of this website are © 2024{' '}
+                    <Link href="https://www.apache.org/">Apache Software Foundation</Link> under the terms of the{' '}
+                    <Link href="https://www.apache.org/licenses/LICENSE-2.0.html">Apache License v2.</Link> Apache
+                    Doris, Doris, and the Doris logo are either registered trademarks or trademarks of The Apache
+                    Software Foundation in the United States and other countries.
+                </p>
+            </div>
+        );
+    }
+
     return (
-        <div className="footer">
+        <div className="footer pt-16 pb-10">
             <div className="container">
                 <div className="footer-box">
                     <div className="left">
@@ -32,7 +68,7 @@ function Footer() {
                     <div className="right">
                         <div className="footer__title">
                             <Translate id="footer.follow" description="Footer Follow">
-                                Connect with Us
+                                Join the community
                             </Translate>
                         </div>
                         <div className="social-list">
@@ -56,18 +92,18 @@ function Footer() {
                                 >
                                     <TwitterIcon />
                                 </a>
-                            </div>
-                            <div className="social">
                                 <a
-                                    href="https://join.slack.com/t/apachedoriscommunity/shared_invite/zt-1x7x8fger-F7NoshFQn~djlvGdnEtxUQ"
+                                    href="https://doris.apache.org/slack"
                                     title="slack"
                                     target="_blank"
                                     className="item"
                                 >
                                     <SlackIcon />
                                 </a>
+                            </div>
+                            <div className="social">
                                 <a
-                                    href="https://www.youtube.com/@apachedoris/channels"
+                                    href="https://www.youtube.com/hashtag/apachedoris"
                                     title="youtube"
                                     target="_blank"
                                     className="item"
@@ -82,6 +118,22 @@ function Footer() {
                                 >
                                     <LinkedinIcon />
                                 </a>
+                                <a
+                                    href="https://medium.com/@ApacheDoris"
+                                    title="medium"
+                                    target="_blank"
+                                    className="item"
+                                >
+                                    <MediumIcon />
+                                </a>
+                                 <a
+                                    href="https://discord.gg/ATXQqX8g8F"
+                                    title="discord"
+                                    target="_blank"
+                                    className="item"
+                                >
+                                    <DiscordIcon />
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -91,4 +143,5 @@ function Footer() {
         </div>
     );
 }
+
 export default React.memo(Footer);

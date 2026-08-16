@@ -5,32 +5,13 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## SET-VARIABLE
 
 ### Name
 
 SET VARIABLE
 
-### Description
+## 描述
 
 该语句主要是用来修改 Doris 系统变量，这些系统变量可以分为全局以及会话级别层面来修改，有些也可以进行动态修改。你也可以通过 `SHOW VARIABLE` 来查看这些系统变量。
 
@@ -58,7 +39,7 @@ SET variable_assignment [, variable_assignment] ...
 - `sql_mode`
 - `enable_profile`
 - `query_timeout`
-- <version since="dev" type="inline">`insert_timeout`</version>
+-  `insert_timeout`
 - `exec_mem_limit`
 - `batch_size`
 - `allow_partition_column_nullable`
@@ -69,7 +50,7 @@ SET variable_assignment [, variable_assignment] ...
 
 - `default_rowset_type`
 
-### Example
+## 举例
 
 1. 设置时区为东八区
 

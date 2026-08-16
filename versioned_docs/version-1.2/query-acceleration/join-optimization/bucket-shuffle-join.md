@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Bucket Shuffle Join
 
 Bucket Shuffle Join is a new function officially added in Doris 0.14. The purpose is to provide local optimization for some join queries to reduce the time-consuming of data transmission between nodes and speed up the query.
@@ -40,19 +21,19 @@ It's design, implementation can be referred to [ISSUE 4394](https://github.com/a
 ## Principle
 The conventional distributed join methods supported by Doris is: `Shuffle Join, Broadcast Join`. Both of these join will lead to some network overhead.
 
-For example, there are join queries for table A and table B. the join method is hashjoin. The cost of different join types is as follows：
+For example, there are join queries for table A and table B. the join method is hashjoin. The cost of different join types is as follows:
 * **Broadcast Join**: If table a has three executing hashjoinnodes according to the data distribution, table B needs to be sent to the three HashJoinNode. Its network overhead is `3B `, and its memory overhead is `3B`. 
 * **Shuffle Join**: Shuffle join will distribute the data of tables A and B to the nodes of the cluster according to hash calculation, so its network overhead is `A + B` and memory overhead is `B`.
 
 The data distribution information of each Doris table is saved in FE. If the join statement hits the data distribution column of the left table, we should use the data distribution information to reduce the network and memory overhead of the join query. This is the source of the idea of bucket shuffle join.
 
-![image.png](/images/bucket_shuffle_join.png)
+![Shuffle Join.png](/images/bucket_shuffle_join.png)
 
 The picture above shows how the Bucket Shuffle Join works. The SQL query is A table join B table. The equivalent expression of join hits the data distribution column of A. According to the data distribution information of table A. Bucket Shuffle Join sends the data of table B to the corresponding data storage and calculation node of table A. The cost of Bucket Shuffle Join is as follows:
 
-* network cost： ``` B < min(3B, A + B) ```
+* network cost: ``` B < min(3B, A + B) ```
 
-* memory cost： ``` B <= min(3B, B) ```
+* memory cost: ``` B <= min(3B, B) ```
 
 Therefore, compared with Broadcast Join and Shuffle Join, Bucket shuffle join has obvious performance advantages. It reduces the time-consuming of data transmission between nodes and the memory cost of join. Compared with Doris's original join method, it has the following advantages
 
@@ -84,14 +65,14 @@ The session variable is set to `true` by default in version 0.14, while it needs
 You can use the `explain` command to check whether the join is a Bucket Shuffle Join
 
 ```sql
-|   2:HASH JOIN                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-|   |  join op: INNER JOIN (BUCKET_SHUFFLE)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-|   |  hash predicates:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-|   |  colocate: false, reason: table not in the same group                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-|   |  equal join conjunct: `test`.`k1` = `baseall`.`k1`                                         
+|   2:HASH JOIN                                               |
+|   |  join op: INNER JOIN (BUCKET_SHUFFLE)                   |
+|   |  hash predicates:                                       |
+|   |  colocate: false, reason: table not in the same group   |
+|   |  equal join conjunct: `test`.`k1` = `baseall`.`k1`      |                                    
 ```
 
-The join type indicates that the join method to be used is：`BUCKET_SHUFFLE`。
+The join type indicates that the join method to be used is:`BUCKET_SHUFFLE`。
 
 ## Planning rules of Bucket Shuffle Join
 

@@ -1,0 +1,18 @@
+.content {
+  font-size: 85%;
+  text-align: center;
+  padding: 5px 0;
+}
+
+.content a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.content a:active {
+  background: linear-gradient(90deg, var(--brand-primary-tint) 0%, var(--brand-primary) 100%), #FFF;
+}
+
+.content p:hover {
+  text-decoration: underline;
+}

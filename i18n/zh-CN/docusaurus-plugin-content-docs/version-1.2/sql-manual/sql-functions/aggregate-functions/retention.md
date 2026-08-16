@@ -5,35 +5,12 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## RETENTION
-
-<version since="1.2.0">
 
 RETENTION
 
-</version>
-
-### description
-#### Syntax
+## 描述
+## 语法
 
 `retention(event1, event2, ... , eventN);`
 
@@ -41,11 +18,11 @@ RETENTION
 
 除了第一个以外，条件成对适用：如果第一个和第二个是真的，第二个结果将是真的，如果第一个和第三个是真的，第三个结果将是真的，等等。
 
-#### Arguments
+## 参数
 
 `event` — 返回`UInt8`结果（1或0）的表达式.
 
-##### Returned value
+## 返回值
 
 由1和0组成的数组。
 
@@ -53,7 +30,7 @@ RETENTION
 
 0 — 条件不满足
 
-### example
+## 举例
 
 ```sql
 DROP TABLE IF EXISTS retention_test;

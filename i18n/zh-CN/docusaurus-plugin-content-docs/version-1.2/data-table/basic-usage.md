@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # 使用指南
 
 Doris 采用 MySQL 协议进行通信，用户可通过 MySQL client 或者 MySQL JDBC连接到 Doris 集群。选择 MySQL client 版本时建议采用5.1 之后的版本，因为 5.1 之前不能支持长度超过 16 个字符的用户名。本文以 MySQL client 为例，通过一个完整的流程向用户展示 Doris 的基本使用方法。
@@ -46,7 +27,7 @@ Doris 内置 root，密码默认为空。
 
 启动完 Doris 程序之后，可以通过 root 或 admin 用户连接到 Doris 集群。 使用下面命令即可登录 Doris，登录后进入到Doris对应的Mysql命令行操作界面：
 
-```bash
+```shell
 [root@doris ~]# mysql  -h FE_HOST -P9030 -uroot
 Welcome to the MySQL monitor.  Commands end with ; or \g.
 Your MySQL connection id is 41
@@ -78,14 +59,14 @@ Query OK, 0 rows affected (0.00 sec)
 
 我们可以通过下面的命令创建一个普通用户`test`：
 
-```bash
+```shell
 mysql> CREATE USER 'test' IDENTIFIED BY 'test_passwd';
 Query OK, 0 rows affected (0.00 sec)
 ```
 
 后续登录时就可以通过下面链接命令登录：
 
-```bash
+```shell
 [root@doris ~]# mysql -h FE_HOST -P9030 -utest -ptest_passwd
 ```
 
@@ -292,7 +273,7 @@ Doris 支持多种数据导入方式。具体可以参阅 [数据导入](../data
 
 示例1：以 "table1_20170707" 为 Label，使用本地文件 table1_data 导入 table1 表。
 
-```bash
+```shell
 curl --location-trusted -u test:test_passwd -H "label:table1_20170707" -H "column_separator:," -T table1_data http://FE_HOST:8030/api/example_db/table1/_stream_load
 ```
 
@@ -311,7 +292,7 @@ curl --location-trusted -u test:test_passwd -H "label:table1_20170707" -H "colum
 
 示例2: 以 "table2_20170707" 为 Label，使用本地文件 table2_data 导入 table2 表。
 
-```bash
+```shell
 curl --location-trusted -u test:test -H "label:table2_20170707" -H "column_separator:|" -T table2_data http://127.0.0.1:8030/api/example_db/table2/_stream_load
 ```
 

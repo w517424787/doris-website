@@ -5,25 +5,6 @@
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Subscribe to Kafka logs
 
 Users can directly subscribe to message data in Kafka by submitting routine import jobs to synchronize data in near real-time.
@@ -56,7 +37,7 @@ Accessing an SSL-authenticated Kafka cluster requires the user to provide a cert
   CREATE FILE "ca.pem" PROPERTIES("url" = "https://example_url/kafka-key/ca.pem", "catalog" = "kafka");
   CREATE FILE "client.key" PROPERTIES("url" = "https://example_urlkafka-key/client.key", "catalog" = "kafka");
   CREATE FILE "client.pem" PROPERTIES("url" = "https://example_url/kafka-key/client.pem", "catalog" = "kafka");
-  ````
+  ```
 
 After the upload is complete, you can view the uploaded files through the [SHOW FILES](../../../sql-manual/sql-reference/Show-Statements/SHOW-FILE.md) command.
 
@@ -83,7 +64,7 @@ For specific commands to create routine import tasks, see [ROUTINE LOAD](../../.
        "property.client.id" = "xxx",
        "property.kafka_default_offsets" = "OFFSET_BEGINNING"
    );
-   ````
+   ```
 
    - `max_batch_interval/max_batch_rows/max_batch_size` is used to control the running period of a subtask. The running period of a subtask is determined by the longest running time, the maximum number of rows consumed, and the maximum amount of data consumed.
 
@@ -108,7 +89,7 @@ For specific commands to create routine import tasks, see [ROUTINE LOAD](../../.
       "property.ssl.key.location" = "FILE:client.key",
       "property.ssl.key.password" = "abcdefg"
    );
-   ````
+   ```
 
 ### View import job status
 

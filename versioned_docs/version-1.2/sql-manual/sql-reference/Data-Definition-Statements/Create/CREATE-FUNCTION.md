@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## CREATE-FUNCTION
 
 ### Name
@@ -45,7 +26,7 @@ CREATE [GLOBAL] [AGGREGATE] [ALIAS] FUNCTION function_name
     [INTERMEDIATE inter_type]
     [WITH PARAMETER(param [,...]) AS origin_function]
     [PROPERTIES ("key" = "value" [, ...]) ]
-````
+```
 
 Parameter Description:
 
@@ -108,7 +89,7 @@ Parameter Description:
    "symbol" = "_ZN9doris_udf6AddUdfEPNS_15FunctionContextERKNS_6IntValES4_",
    "object_file" = "http://host:port/libmyadd.so"
    );
-   ````
+   ```
 
 2. Create a custom scalar function with prepare/close functions
 
@@ -119,7 +100,7 @@ Parameter Description:
    "close_fn" = "_ZN9doris_udf12AddUdf_closeEPNS_15FunctionContextENS0_18FunctionStateScopeE",
    "object_file" = "http://host:port/libmyadd.so"
    );
-   ````
+   ```
 
 3. Create a custom aggregate function
 
@@ -131,7 +112,7 @@ Parameter Description:
             "finalize_fn"="_ZN9doris_udf13CountFinalizeEPNS_15FunctionContextERKNS_9BigIntValE",
             "object_file"="http://host:port/libudasample.so"
    );
-   ````
+   ```
 
 
 4. Create a scalar function with variable length arguments
@@ -141,13 +122,13 @@ Parameter Description:
    "symbol" = "_ZN9doris_udf6StrConcatUdfEPNS_15FunctionContextERKNS_6IntValES4_",
    "object_file" = "http://host:port/libmyStrConcat.so"
    );
-   ````
+   ```
 
 5. Create a custom alias function
 
    ```sql
    CREATE ALIAS FUNCTION id_masking(INT) WITH PARAMETER(id) AS CONCAT(LEFT(id, 3), '****', RIGHT(id, 4));
-   ````
+   ```
 
 6. Create a global custom scalar function
 
@@ -156,13 +137,13 @@ Parameter Description:
    "symbol" = "_ZN9doris_udf6AddUdfEPNS_15FunctionContextERKNS_6IntValES4_",
    "object_file" = "http://host:port/libmyadd.so"
    );
-   ````
+   ```
 
 7. Create a global custom alias function
 
    ```sql
    CREATE GLOBAL ALIAS FUNCTION id_masking(INT) WITH PARAMETER(id) AS CONCAT(LEFT(id, 3), '****', RIGHT(id, 4));
-   ```` 
+   ``` 
 
 ### Keywords
 

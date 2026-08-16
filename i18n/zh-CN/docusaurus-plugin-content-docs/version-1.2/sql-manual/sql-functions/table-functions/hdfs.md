@@ -1,28 +1,9 @@
 ---
 {
-    "title": "hdfs",
+    "title": "HDFS",
     "language": "zh-CN"
 }
 ---
-
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
 
 ## HDFS
 
@@ -34,11 +15,11 @@ hdfs
 
 </version>
 
-### Description
+## 描述
 
 HDFS表函数（table-valued-function,tvf），可以让用户像访问关系表格式数据一样，读取并访问 HDFS 上的文件内容。目前支持`csv/csv_with_names/csv_with_names_and_types/json/parquet/orc`文件格式。
 
-#### syntax
+## 语法
 ```sql
 hdfs(
   "uri" = "..",
@@ -68,7 +49,7 @@ hdfs(
 - `column_separator`：(选填) 列分割符, 默认为`,`。 
 - `line_delimiter`：(选填) 行分割符，默认为`\n`。
 
-    下面6个参数是用于json格式的导入，具体使用方法可以参照：[Json Load](../../../data-operate/import/import-way/load-json-format.md)
+    下面6个参数是用于json格式的导入，具体使用方法可以参照：[Json Load](../../../data-operate/import/file-format/json)
 
 - `read_json_by_line`： (选填) 默认为 `"true"`
 - `strip_outer_array`： (选填) 默认为 `"false"`
@@ -82,7 +63,7 @@ hdfs(
 - `trim_double_quotes`： 布尔类型，选填，默认值为 `false`，为 `true` 时表示裁剪掉 csv 文件每个字段最外层的双引号
 - `skip_lines`： 整数类型，选填，默认值为0，含义为跳过csv文件的前几行。当设置format设置为 `csv_with_names` 或 `csv_with_names_and_types` 时，该参数会失效 
 
-### Examples
+## 举例s
 
 读取并访问 HDFS 存储上的csv格式文件
 ```sql

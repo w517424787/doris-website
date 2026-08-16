@@ -1,40 +1,40 @@
 import React from 'react';
-import clsx from 'clsx';
 import { useThemeConfig } from '@docusaurus/theme-common';
 import { useAnnouncementBar } from '@docusaurus/theme-common/internal';
-import { translate } from '@docusaurus/Translate';
+import AnnouncementBarCloseButton from '@theme/AnnouncementBar/CloseButton';
+import AnnouncementBarContent from '@theme/AnnouncementBar/Content';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import { useLocation } from '@docusaurus/router';
+import { isDocsPath } from '@site/src/utils/locale';
+
 import styles from './styles.module.css';
-import IconClose from '@theme/Icon/Close';
-export default function AnnouncementBar() {
-    const { isActive, close } = useAnnouncementBar();
+
+export default function AnnouncementBar(): React.ReactElement | null {
     const { announcementBar } = useThemeConfig();
-    if (!isActive) {
+    const { isActive, close } = useAnnouncementBar();
+    const { i18n } = useDocusaurusContext();
+    const { currentLocale, locales } = i18n;
+    const location = useLocation();
+    const { backgroundColor, textColor, isCloseable, content } = announcementBar!;
+    const contentMap = JSON.parse(content);
+    const localeContent = currentLocale === 'zh-CN' ? contentMap.zh : contentMap.en;
+    
+    if (!isActive || !localeContent) {
         return null;
     }
-    const { content, backgroundColor, textColor, isCloseable } = announcementBar;
     return (
-        <div className={styles.announcementBar} style={{ backgroundColor, color: textColor }} role="banner">
+        <div
+            className={styles.announcementBar}
+            style={
+                isDocsPath(location.pathname, locales)
+                    ? { backgroundColor, color: textColor }
+                    : { display: 'none' }
+            }
+            role="banner"
+        >
             {isCloseable && <div className={styles.announcementBarPlaceholder} />}
-            <div
-                className={styles.announcementBarContent}
-                // Developer provided the HTML, so assume it's safe.
-                // eslint-disable-next-line react/no-danger
-                dangerouslySetInnerHTML={{ __html: content }}
-            />
-            {isCloseable ? (
-                <button
-                    type="button"
-                    className={clsx('clean-btn close', styles.announcementBarClose)}
-                    onClick={close}
-                    aria-label={translate({
-                        id: 'theme.AnnouncementBar.closeButtonAriaLabel',
-                        message: 'Close',
-                        description: 'The ARIA label for close button of announcement bar',
-                    })}
-                >
-                    <IconClose width={14} height={14} strokeWidth={3.1} />
-                </button>
-            ) : null}
+            <AnnouncementBarContent className={styles.announcementBarContent} />
+            {isCloseable && <AnnouncementBarCloseButton onClick={close} className={styles.announcementBarClose} />}
         </div>
     );
 }

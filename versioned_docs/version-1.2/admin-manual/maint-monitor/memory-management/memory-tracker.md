@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements. See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership. The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License. You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied. See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 # Memory Tracker
 
 <version since="1.2.0">
@@ -40,7 +21,7 @@ https://shimo.im/docs/DT6JXDRkdTvdyV3G
 
 ## View statistics
 
-The real-time memory statistics results can be viewed through Doris BE's Web page http://ip:http_port/mem_tracker.
+The real-time memory statistics results can be viewed through Doris BE's Web page `http://ip:http_port/mem_tracker`.
 For the memory statistics results of historical queries, you can view the `peakMemoryBytes` of each query in `fe/log/fe.audit.log`, or search `Deregister query/load memory tracker, queryId` in `be/log/be.INFO` `View memory peaks per query on a single BE.
 
 ### Home `/mem_tracker`
@@ -51,7 +32,7 @@ For the memory statistics results of historical queries, you can view the `peakM
 - global: Global Memory Tracker with the same life cycle and process, such as each Cache, Tablet Manager, Storage Engine, etc.
 - query: the in-memory sum of all queries.
 - load: Sum of all imported memory.
-- tc/jemalloc_cache: The general memory allocator TCMalloc or Jemalloc cache, you can view the original profile of the memory allocator in real time at http://ip:http_port/memz.
+- tc/jemalloc_cache: The general memory allocator TCMalloc or Jemalloc cache, you can view the original profile of the memory allocator in real time at `http://ip:http_port/memz`.
 - compaction, schema_change, consistency, batch_load, clone: ​​corresponding to the memory sum of all Compaction, Schema Change, Consistency, Batch Load, and Clone tasks respectively.
 
 2. Current Consumption(Bytes): current memory value, unit B.

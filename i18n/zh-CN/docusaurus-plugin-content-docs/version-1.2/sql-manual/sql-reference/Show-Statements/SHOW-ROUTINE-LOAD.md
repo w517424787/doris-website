@@ -5,32 +5,13 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## SHOW-ROUTINE-LOAD
 
 ### Name
 
 SHOW ROUTINE LOAD
 
-### Description
+## 描述
 
 该语句用于展示 Routine Load 作业运行状态
 
@@ -81,7 +62,7 @@ ReasonOfStateChanged: 作业状态变更的原因
   
         对于Kafka数据源，显示每个分区的消费延迟。如{"0":10} 表示Kafka分区0的消费延迟为10。
 
-### Example
+## 举例
 
 1. 展示名称为 test1 的所有例行导入作业（包括已停止或取消的作业）。结果为一行或多行。
 

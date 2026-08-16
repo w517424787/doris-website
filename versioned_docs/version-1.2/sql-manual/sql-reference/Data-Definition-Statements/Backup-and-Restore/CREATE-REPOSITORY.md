@@ -5,25 +5,6 @@
 }
 ---
 
-<!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
 ## CREATE-REPOSITORY
 
 ### Name
@@ -48,7 +29,7 @@ illustrate:
 - Creation of repositories, relying on existing brokers or accessing cloud storage directly through AWS s3 protocol, or accessing HDFS directly.
 - If it is a read-only repository, restores can only be done on the repository. If not, backup and restore operations are available.
 - PROPERTIES are different according to different types of broker or S3 or hdfs, see the example for details.
-- ON LOCATION ： if it is S3 , here followed by the Bucket Name.
+- ON LOCATION : if it is S3 , here followed by the Bucket Name.
 
 ### Example
 
@@ -125,7 +106,7 @@ PROPERTIES
 ```
 6. Create a repository named minio_repo to link minio storage directly through the s3 protocol.
 
-```
+```sql
 CREATE REPOSITORY `minio_repo`
 WITH S3
 ON LOCATION "s3://minio_repo"
@@ -142,9 +123,8 @@ PROPERTIES
 
 7. Create a repository named minio_repo via temporary security credentials.
 
-<version since="1.2"></version>
 
-```
+```sql
 CREATE REPOSITORY `minio_repo`
 WITH S3
 ON LOCATION "s3://minio_repo"
@@ -160,7 +140,7 @@ PROPERTIES
 
 8. Create repository using Tencent COS
 
-```
+```sql
 CREATE REPOSITORY `cos_repo`
 WITH S3
 ON LOCATION "s3://backet1/"

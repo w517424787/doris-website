@@ -1,88 +1,69 @@
 ---
 {
-    "title": "JSON格式数据导入",
+    "title": "BE OOM 分析",
     "language": "zh-CN"
 }
 ---
 
-<!-- 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
+# BE OOM 分析
 
-  http://www.apache.org/licenses/LICENSE-2.0
+<version since="1.2.0">
 
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
+理想情况下，在 [Memory Limit Exceeded Analysis](./memory-limit-exceeded-analysis.md) 中我们定时检测操作系统剩余可用内存，并在内存不足时及时响应，如触发内存 GC 释放缓存或 cancel 内存超限的查询，但因为刷新进程内存统计和内存 GC 都具有一定的滞后性，同时我们很难完全 catch 所有大内存申请，在集群压力过大时仍有 OOM 风险。
 
-# JSON格式数据导入
+## 解决方法
+参考 [BE 配置项](../../../config/be-config) 在`be.conf`中调小`mem_limit`，调大`max_sys_mem_available_low_water_mark_bytes`。
 
-Doris 支持导入 JSON 格式的数据。本文档主要说明在进行 JSON 格式数据导入时的注意事项。
+## 内存分析
+若希望进一步了解 OOM 前 BE 进程的内存使用位置，减少进程内存使用，可参考如下步骤分析。
 
-## 支持的导入方式
+1. `dmesg -T`确认 OOM 的时间和 OOM 时的进程内存。
 
-目前只有以下导入方式支持 JSON 格式的数据导入：
+2. 查看 be/log/be.INFO 的最后是否有 `Memory Tracker Summary` 日志，如果有说明 BE 已经检测到内存超限，则继续步骤 3，否则继续步骤 8
+```
+Memory Tracker Summary:
+    Type=consistency, Used=0(0 B), Peak=0(0 B)
+    Type=batch_load, Used=0(0 B), Peak=0(0 B)
+    Type=clone, Used=0(0 B), Peak=0(0 B)
+    Type=schema_change, Used=0(0 B), Peak=0(0 B)
+    Type=compaction, Used=0(0 B), Peak=0(0 B)
+    Type=load, Used=0(0 B), Peak=0(0 B)
+    Type=query, Used=206.67 MB(216708729 B), Peak=565.26 MB(592723181 B)
+    Type=global, Used=930.42 MB(975614571 B), Peak=1017.42 MB(1066840223 B)
+    Type=tc/jemalloc_cache, Used=51.97 MB(54494616 B), Peak=-1.00 B(-1 B)
+    Type=process, Used=1.16 GB(1246817916 B), Peak=-1.00 B(-1 B)
+    MemTrackerLimiter Label=Orphan, Type=global, Limit=-1.00 B(-1 B), Used=474.20 MB(497233597 B), Peak=649.18 MB(680718208 B)
+    MemTracker Label=BufferAllocator, Parent Label=Orphan, Used=0(0 B), Peak=0(0 B)
+    MemTracker Label=LoadChannelMgr, Parent Label=Orphan, Used=0(0 B), Peak=0(0 B)
+    MemTracker Label=StorageEngine, Parent Label=Orphan, Used=320.56 MB(336132488 B), Peak=322.56 MB(338229824 B)
+    MemTracker Label=SegCompaction, Parent Label=Orphan, Used=0(0 B), Peak=0(0 B)
+    MemTracker Label=SegmentMeta, Parent Label=Orphan, Used=948.64 KB(971404 B), Peak=943.64 KB(966285 B)
+    MemTracker Label=TabletManager, Parent Label=Orphan, Used=0(0 B), Peak=0(0 B)
+    MemTrackerLimiter Label=DataPageCache, Type=global, Limit=-1.00 B(-1 B), Used=455.22 MB(477329882 B), Peak=454.18 MB(476244180 B)
+    MemTrackerLimiter Label=IndexPageCache, Type=global, Limit=-1.00 B(-1 B), Used=1.00 MB(1051092 B), Peak=0(0 B)
+    MemTrackerLimiter Label=SegmentCache, Type=global, Limit=-1.00 B(-1 B), Used=0(0 B), Peak=0(0 B)
+    MemTrackerLimiter Label=DiskIO, Type=global, Limit=2.47 GB(2655423201 B), Used=0(0 B), Peak=0(0 B)
+    MemTrackerLimiter Label=ChunkAllocator, Type=global, Limit=-1.00 B(-1 B), Used=0(0 B), Peak=0(0 B)
+    MemTrackerLimiter Label=LastestSuccessChannelCache, Type=global, Limit=-1.00 B(-1 B), Used=0(0 B), Peak=0(0 B)
+    MemTrackerLimiter Label=DeleteBitmap AggCache, Type=global, Limit=-1.00 B(-1 B), Used=0(0 B), Peak=0(0 B)
+```
 
-- 通过 [S3 表函数](../../../sql-manual/sql-functions/table-functions/s3.md) 导入语句：insert into table select * from S3();
-- 将本地 JSON 格式的文件通过 [STREAM LOAD](../../../sql-manual/sql-reference/Data-Manipulation-Statements/Load/STREAM-LOAD.md) 方式导入。
-- 通过 [ROUTINE LOAD](../../../sql-manual/sql-reference/Data-Manipulation-Statements/Load/CREATE-ROUTINE-LOAD.md) 订阅并消费 Kafka 中的 JSON 格式消息。
+3. 当 OOM 前 be/log/be.INFO 的最后包含系统内存超限的日志时，参考 [Memory Limit Exceeded Analysis](./memory-limit-exceeded-analysis.md) 中的日志分析方法，查看进程每个类别的内存使用情况。若当前是`type=query`内存使用较多，若已知 OOM 前的查询继续步骤 4，否则继续步骤 5；若当前是`type=load`内存使用多继续步骤 6，若当前是`type=global`内存使用多继续步骤 7。
 
-暂不支持其他方式的 JSON 格式数据导入。
+4. `type=query`查询内存使用多，且已知 OOM 前的查询时，比如测试集群或定时任务，重启 BE 节点，参考 [Memory Tracker](./memory-tracker.md) 查看实时 memory tracker 统计，`set global enable_profile=true`后重试查询，观察具体算子的内存使用位置，确认查询内存使用是否合理，进一步考虑优化 SQL 内存使用，比如调整 join 顺序。
 
-## 支持的 JSON 格式
+5. `type=query`查询内存使用多，且未知 OOM 前的查询时，比如位于线上集群，则在`be/log/be.INFO`从后向前搜`Deregister query/load memory tracker, queryId` 和 `Register query/load memory tracker, query/load id`，同一个 query id 若同时打出上述两行日志则表示查询或导入成功，若只有 Register 没有 Deregister，则这个查询或导入在 OOM 前仍在运行，这样可以得到 OOM 前所有正在运行的查询和导入，按照步骤 4 的方法对可疑大内存查询分析其内存使用。
 
-当前仅支持以下两种 JSON 格式：
+6. `type=load`导入内存使用多时。
 
-1. 以 Array 表示的多行数据
+7. `type=global`内存使用多时，继续查看`Memory Tracker Summary`日志后半部分已经打出得`type=global`详细统计。当 DataPageCache、IndexPageCache、SegmentCache、ChunkAllocator、LastestSuccessChannelCache 等内存使用多时，参考 [BE 配置项](../../../config/be-config) 考虑修改 cache 的大小；当 Orphan 内存使用过多时，如下继续分析。
+  - 若`Parent Label=Orphan`的 tracker 统计值相加只占 Orphan 内存的小部分，则说明当前有大量内存没有准确统计，比如 brpc 过程的内存，此时可以考虑借助 heap profile [Memory Tracker](https://doris.apache.org/zh-CN/community/developer-guide/debug-tool) 中的方法进一步分析内存位置。
+  - 若`Parent Label=Orphan`的 tracker 统计值相加占 Orphan 内存的大部分，当`Label=TabletManager`内存使用多时，进一步查看集群 Tablet 数量，若 Tablet 数量过多则考虑删除过时不会被使用的表或数据；当`Label=StorageEngine`内存使用过多时，进一步查看集群 Segment 文件个数，若 Segment 文件个数过多则考虑手动触发 compaction；
 
-   以 Array 为根节点的 JSON 格式。Array 中的每个元素表示要导入的一行数据，通常是一个 Object。示例如下：
+8. 若`be/log/be.INFO`没有在 OOM 前打印出`Memory Tracker Summary`日志，说明 BE 没有及时检测出内存超限，观察 Grafana 内存监控确认 BE 在 OOM 前的内存增长趋势，若 OOM 可复现，考虑在`be.conf`中增加`memory_debug=true`，重启集群后会每秒打印集群内存统计，观察 OOM 前的最后一次`Memory Tracker Summary`日志，继续步骤 3 分析；
 
-   ```json
-   [
-       { "id": 123, "city" : "beijing"},
-       { "id": 456, "city" : "shanghai"},
-       ...
-   ]
-   ```
-
-   ```json
-   [
-       { "id": 123, "city" : { "name" : "beijing", "region" : "haidian"}},
-       { "id": 456, "city" : { "name" : "beijing", "region" : "chaoyang"}},
-       ...
-   ]
-   ```
-
-   这种方式通常用于 Stream Load 导入方式，以便在一批导入数据中表示多行数据。
-
-   这种方式必须配合设置 `strip_outer_array=true` 使用。Doris 在解析时会将数组展开，然后依次解析其中的每一个 Object 作为一行数据。
-
-2. 以 Object 表示的单行数据
-
-   以 Object 为根节点的 JSON 格式。整个 Object 即表示要导入的一行数据。示例如下：
-
-   ```json
-   { "id": 123, "city" : "beijing"}
-   ```
-
-   ```json
-   { "id": 123, "city" : { "name" : "beijing", "region" : "haidian" }}
-   ```
-
-   这种方式通常用于 Routine Load 导入方式，如表示 Kafka 中的一条消息，即一行数据。
-   
-2. 以固定分隔符分隔的多行 Object 数据
-
-   Object表示的一行数据即表示要导入的一行数据，示例如下：
+</version>
+   Object 表示的一行数据即表示要导入的一行数据，示例如下：
 
    ```json
    { "id": 123, "city" : "beijing"}
@@ -98,7 +79,7 @@ Doris 支持导入 JSON 格式的数据。本文档主要说明在进行 JSON �
 
 一些数据格式，如 JSON，无法进行拆分处理，必须读取全部数据到内存后才能开始解析，因此，这个值用于限制此类格式数据单次导入最大数据量。
 
-默认值为100，单位MB，可参考[BE配置项](../../../admin-manual/config/be-config.md)修改这个参数
+默认值为 100，单位 MB，可参考[BE 配置项](../../../admin-manual/config/be-config)修改这个参数
 
 ### fuzzy_parse 参数
 
@@ -118,7 +99,7 @@ Doris 支持通过 JSON Path 抽取 JSON 中指定的数据。
 
   如果没有指定 JSON Path，则 Doris 会默认使用表中的列名查找 Object 中的元素。示例如下：
 
-  表中包含两列: `id`, `city`
+  表中包含两列：`id`, `city`
 
   JSON 数据如下：
 
@@ -234,13 +215,13 @@ JSON Path 用于指定如何对 JSON 格式中的数据进行抽取，而 Column
 k2 int, k1 int
 ```
 
-导入语句1（以 Stream Load 为例）：
+导入语句 1（以 Stream Load 为例）：
 
-```bash
+```shell
 curl -v --location-trusted -u root: -H "format: json" -H "jsonpaths: [\"$.k2\", \"$.k1\"]" -T example.json http://127.0.0.1:8030/api/db1/tbl1/_stream_load
 ```
 
-导入语句1中，仅指定了 JSON Path，没有指定 Columns。其中 JSON Path 的作用是将 JSON 数据按照 JSON Path 中字段的顺序进行抽取，之后会按照表结构的顺序进行写入。最终导入的数据结果如下：
+导入语句 1 中，仅指定了 JSON Path，没有指定 Columns。其中 JSON Path 的作用是将 JSON 数据按照 JSON Path 中字段的顺序进行抽取，之后会按照表结构的顺序进行写入。最终导入的数据结果如下：
 
 ```text
 +------+------+
@@ -252,13 +233,13 @@ curl -v --location-trusted -u root: -H "format: json" -H "jsonpaths: [\"$.k2\", 
 
 会看到，实际的 k1 列导入了 JSON 数据中的 "k2" 列的值。这是因为，JSON 中字段名称并不等同于表结构中字段的名称。我们需要显式的指定这两者之间的映射关系。
 
-导入语句2：
+导入语句 2：
 
-```bash
+```shell
 curl -v --location-trusted -u root: -H "format: json" -H "jsonpaths: [\"$.k2\", \"$.k1\"]" -H "columns: k2, k1" -T example.json http://127.0.0.1:8030/api/db1/tbl1/_stream_load
 ```
 
-相比如导入语句1，这里增加了 Columns 字段，用于描述列的映射关系，按 `k2, k1` 的顺序。即按 JSON Path 中字段的顺序抽取后，指定第一列为表中 k2 列的值，而第二列为表中 k1 列的值。最终导入的数据结果如下：
+相比如导入语句 1，这里增加了 Columns 字段，用于描述列的映射关系，按 `k2, k1` 的顺序。即按 JSON Path 中字段的顺序抽取后，指定第一列为表中 k2 列的值，而第二列为表中 k1 列的值。最终导入的数据结果如下：
 
 ```text
 +------+------+
@@ -270,7 +251,7 @@ curl -v --location-trusted -u root: -H "format: json" -H "jsonpaths: [\"$.k2\", 
 
 当然，如其他导入一样，可以在 Columns 中进行列的转换操作。示例如下：
 
-```bash
+```shell
 curl -v --location-trusted -u root: -H "format: json" -H "jsonpaths: [\"$.k2\", \"$.k1\"]" -H "columns: k2, tmp_k1, k1 = tmp_k1 * 100" -T example.json http://127.0.0.1:8030/api/db1/tbl1/_stream_load
 ```
 
@@ -294,7 +275,7 @@ Doris 支持通过 JSON root 抽取 JSON 中指定的数据。
 
   如果没有指定 JSON root，则 Doris 会默认使用表中的列名查找 Object 中的元素。示例如下：
 
-  表中包含两列: `id`, `city`
+  表中包含两列：`id`, `city`
 
   JSON 数据为：
 
@@ -302,7 +283,7 @@ Doris 支持通过 JSON root 抽取 JSON 中指定的数据。
   { "id": 123, "name" : { "id" : "321", "city" : "shanghai" }}
   ```
 
-  则 Doris 会使用id, city 进行匹配，得到最终数据 123 和 null。
+  则 Doris 会使用 id, city 进行匹配，得到最终数据 123 和 null。
 
 - 指定 JSON root
 
@@ -314,7 +295,7 @@ Doris 支持通过 JSON root 抽取 JSON 中指定的数据。
   { "id" : "321", "city" : "shanghai" }
   ```
 
-  该元素会被当作新 JSON 进行后续导入操作,得到最终数据 321 和 shanghai
+  该元素会被当作新 JSON 进行后续导入操作，得到最终数据 321 和 shanghai
 
 ## NULL 和 Default 值
 
@@ -332,7 +313,7 @@ Doris 支持通过 JSON root 抽取 JSON 中指定的数据。
 
 导入语句如下：
 
-```bash
+```shell
 curl -v --location-trusted -u root: -H "format: json" -H "strip_outer_array: true" -T example.json http://127.0.0.1:8030/api/db1/tbl1/_stream_load
 ```
 
@@ -364,9 +345,9 @@ curl -v --location-trusted -u root: -H "format: json" -H "strip_outer_array: tru
 +------+------+
 ```
 
-这是因为通过导入语句中的信息，Doris 并不知道 “缺失的列是表中的 k2 列”。 如果要对以上数据按照期望结果导入，则导入语句如下：
+这是因为通过导入语句中的信息，Doris 并不知道“缺失的列是表中的 k2 列”。如果要对以上数据按照期望结果导入，则导入语句如下：
 
-```bash
+```shell
 curl -v --location-trusted -u root: -H "format: json" -H "strip_outer_array: true" -H "jsonpaths: [\"$.k1\", \"$.k2\"]" -H "columns: k1, tmp_k2, k2 = ifnull(tmp_k2, 'x')" -T example.json http://127.0.0.1:8030/api/db1/tbl1/_stream_load
 ```
 
@@ -384,7 +365,7 @@ city    VARHCAR NULL,
 code    INT     NULL
 ```
 
-1. 导入单行数据1
+1. 导入单行数据 1
 
    ```json
    {"id": 100, "city": "beijing", "code" : 1}
@@ -392,7 +373,7 @@ code    INT     NULL
 
    - 不指定 JSON Path
 
-     ```bash
+     ```shell
      curl --location-trusted -u user:passwd -H "format: json" -T data.json http://localhost:8030/api/db1/tbl1/_stream_load
      ```
 
@@ -404,7 +385,7 @@ code    INT     NULL
 
    - 指定 JSON Path
 
-     ```bash
+     ```shell
      curl --location-trusted -u user:passwd -H "format: json" -H "jsonpaths: [\"$.id\",\"$.city\",\"$.code\"]" -T data.json http://localhost:8030/api/db1/tbl1/_stream_load
      ```
 
@@ -414,7 +395,7 @@ code    INT     NULL
      100     beijing     1
      ```
 
-2. 导入单行数据2
+2. 导入单行数据 2
 
    ```json
    {"id": 100, "content": {"city": "beijing", "code" : 1}}
@@ -422,7 +403,7 @@ code    INT     NULL
 
    - 指定 JSON Path
 
-     ```bash
+     ```shell
      curl --location-trusted -u user:passwd -H "format: json" -H "jsonpaths: [\"$.id\",\"$.content.city\",\"$.content.code\"]" -T data.json http://localhost:8030/api/db1/tbl1/_stream_load
      ```
 
@@ -453,7 +434,7 @@ code    INT     NULL
 
    - 指定 JSON Path
 
-     ```bash
+     ```shell
      curl --location-trusted -u user:passwd -H "format: json" -H "jsonpaths: [\"$.id\",\"$.city\",\"$.code\"]" -H "strip_outer_array: true" -T data.json http://localhost:8030/api/db1/tbl1/_stream_load
      ```
 
@@ -477,9 +458,9 @@ code    INT     NULL
       {"id": 103, "city": "chongqing", "code" : 4}
       ```
 
-StreamLoad导入：
+StreamLoad 导入：
 
-```bash
+```shell
 curl --location-trusted -u user:passwd -H "format: json" -H "read_json_by_line: true" -T data.json http://localhost:8030/api/db1/tbl1/_stream_load
 ```
 
@@ -494,9 +475,9 @@ curl --location-trusted -u user:passwd -H "format: json" -H "read_json_by_line: 
 
 5. 对导入数据进行转换
 
-数据依然是示例3中的多行数据，现需要对导入数据中的 `code` 列加1后导入。
+数据依然是示例 3 中的多行数据，现需要对导入数据中的 `code` 列加 1 后导入。
 
-```bash
+```shell
 curl --location-trusted -u user:passwd -H "format: json" -H "jsonpaths: [\"$.id\",\"$.city\",\"$.code\"]" -H "strip_outer_array: true" -H "columns: id, city, tmpc, code=tmpc+1" -T data.json http://localhost:8030/api/db1/tbl1/_stream_load
 ```
 
@@ -511,8 +492,8 @@ curl --location-trusted -u user:passwd -H "format: json" -H "jsonpaths: [\"$.id\
 105     {"order1":["guangzhou"]}    7
 ```
 
-6. 使用 JSON 导入Array类型
-由于 RapidJSON 处理decimal和largeint数值会导致精度问题，所以我们建议使用 JSON 字符串来导入数据到`array<decimal>` 或 `array<largeint>`列。
+6. 使用 JSON 导入 Array 类型
+由于 RapidJSON 处理 decimal 和 largeint 数值会导致精度问题，所以我们建议使用 JSON 字符串来导入数据到`array<decimal>` 或 `array<largeint>`列。
 
 ```json
 {"k1": 39, "k2": ["-818.2173181"]}
@@ -522,11 +503,11 @@ curl --location-trusted -u user:passwd -H "format: json" -H "jsonpaths: [\"$.id\
 {"k1": 40, "k2": ["10000000000000000000.1111111222222222"]}
 ```
 
-```bash
-curl --location-trusted -u root:  -H "max_filter_ration:0.01" -H "format:json" -H "timeout:300" -T test_decimal.json http://localhost:8035/api/example_db/array_test_decimal/_stream_load
+```shell
+curl --location-trusted -u root:  -H "max_filter_ratio:0.01" -H "format:json" -H "timeout:300" -T test_decimal.json http://localhost:8035/api/example_db/array_test_decimal/_stream_load
 ```
 
-导入结果:
+导入结果：
 ```
 MySQL > select * from array_test_decimal;
 +------+----------------------------------+
@@ -542,11 +523,11 @@ MySQL > select * from array_test_decimal;
 {"k1": 999, "k2": ["76959836937749932879763573681792701709", "26017042825937891692910431521038521227"]}
 ```
 
-```bash
-curl --location-trusted -u root:  -H "max_filter_ration:0.01" -H "format:json" -H "timeout:300" -T test_largeint.json http://localhost:8035/api/example_db/array_test_largeint/_stream_load
+```shell
+curl --location-trusted -u root:  -H "max_filter_ratio:0.01" -H "format:json" -H "timeout:300" -T test_largeint.json http://localhost:8035/api/example_db/array_test_largeint/_stream_load
 ```
 
-导入结果:
+导入结果：
 ```
 MySQL > select * from array_test_largeint;
 +------+------------------------------------------------------------------------------------+
